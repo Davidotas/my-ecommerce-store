@@ -1,0 +1,53 @@
+import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
+import { supabase } from "@/lib/supabase";
+import { fromDb, DbProduct } from "@/lib/products";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
+export async function POST(req: NextRequest) {
+  const { items } = await req.json();
+
+  if (!items || items.length === 0) {
+    return NextResponse.json({ error: "No items in cart" }, { status: 400 });
+  }
+
+  const ids = items.map((i: { id: string }) => i.id);
+  const { data: dbProducts, error } = await supabase
+    .from("products")
+    .select("*")
+    .in("id", ids);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const productMap = new Map(
+    (dbProducts ?? []).map((p) => [p.id, fromDb(p as DbProduct)])
+  );
+
+  const lineItems = items.map((item: { id: string; quantity: number }) => {
+    const product = productMap.get(item.id);
+    if (!product) throw new Error(`Product ${item.id} not found`);
+    return {
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: product.name,
+          description: product.description || undefined,
+          images: product.image ? [product.image] : [],
+        },
+        unit_amount: product.price,
+      },
+      quantity: item.quantity,
+    };
+  });
+
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items: lineItems,
+    mode: "payment",
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
+  });
+
+  return NextResponse.json({ url: session.url });
+}

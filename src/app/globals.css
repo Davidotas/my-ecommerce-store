@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/*
+  Brand fonts — Founders Grotesk (headings) and ABC Diatype (body) are
+  premium fonts not on Google Fonts. Add your @font-face declarations
+  below once you have the font files, then the variables will pick them up.
+  System sans-serif is used as fallback in the meantime.
+*/
+
+:root {
+  --bg:        #030607;
+  --fg:        #ffffff;
+  --accent:    #d2ff1f;
+  --secondary: #9c9381;
+  --error:     #f01919;
+  --blue:      #35b9e9;
+  --border:    rgba(255, 255, 255, 0.2);
+
+  --font-heading: "Founders Grotesk", sans-serif;
+  --font-body:    "ABC Diatype", sans-serif;
+
+  /* Tailwind compat aliases */
+  --background: var(--bg);
+  --foreground: var(--fg);
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground:  var(--fg);
+}
+
+body {
+  background:              var(--bg);
+  color:                   var(--fg);
+  font-family:             var(--font-body);
+  font-size:               16px;
+  font-weight:             400;
+  -webkit-font-smoothing:  antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1 {
+  font-family:    var(--font-ojuju);
+  font-weight:    400;
+  letter-spacing: -0.5px;
+}
+
+h2 {
+  font-family:    var(--font-inter);
+  font-weight:    400;
+  letter-spacing: -0.5px;
+}
+
+h3, h4, h5, h6 {
+  font-family:    var(--font-heading);
+  font-weight:    400;
+  letter-spacing: -0.5px;
+}
+
+::selection {
+  background: var(--accent);
+  color:      var(--bg);
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation:    marquee 28s linear infinite;
+  will-change:  transform;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
