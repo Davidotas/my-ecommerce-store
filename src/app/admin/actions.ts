@@ -102,32 +102,42 @@ export async function updateProduct(formData: FormData) {
   redirect("/admin/products");
 }
 
-export async function deleteProduct(formData: FormData) {
+export async function deleteProduct(formData: FormData): Promise<void> {
   const id = formData.get("id") as string;
-  if (!id) return { error: "Product ID is missing." };
-
-  const supabase = createAdminClient();
-  const { data: product } = await supabase
-    .from("products")
-    .select("image_url, images")
-    .eq("id", id)
-    .single();
-
-  if (product) {
-    const filenames = (product.images ?? [product.image_url])
-      .filter(Boolean)
-      .map((u: string) => u.split("/product-images/")[1])
-      .filter(Boolean);
-    if (filenames.length) {
-      await supabase.storage.from("product-images").remove(filenames);
-    }
+  if (!id) {
+    console.error("deleteProduct: Product ID is missing.");
+    return;
   }
 
-  const { error } = await supabase.from("products").delete().eq("id", id);
-  if (error) return { error: `Delete failed: ${error.message}` };
+  try {
+    const supabase = createAdminClient();
+    const { data: product } = await supabase
+      .from("products")
+      .select("image_url, images")
+      .eq("id", id)
+      .single();
 
-  revalidatePath("/");
-  revalidatePath("/admin/products");
+    if (product) {
+      const filenames = (product.images ?? [product.image_url])
+        .filter(Boolean)
+        .map((u: string) => u.split("/product-images/")[1])
+        .filter(Boolean);
+      if (filenames.length) {
+        await supabase.storage.from("product-images").remove(filenames);
+      }
+    }
+
+    const { error } = await supabase.from("products").delete().eq("id", id);
+    if (error) {
+      console.error(`deleteProduct: Delete failed: ${error.message}`);
+      return;
+    }
+
+    revalidatePath("/");
+    revalidatePath("/admin/products");
+  } catch (err) {
+    console.error("deleteProduct: Unexpected error:", err);
+  }
 }
 
 export async function logout() {
