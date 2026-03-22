@@ -11,9 +11,19 @@ type Props = {
   categories: Category[];
 };
 
+async function uploadToStorage(file: File): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await fetch("/api/upload", { method: "POST", body: fd });
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error ?? "Upload failed");
+  return data.url as string;
+}
+
 export default function ProductForm({ product, categories }: Props) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [uploadProgress, setUploadProgress] = useState("");
   const [existingImages, setExistingImages] = useState<string[]>(product?.images ?? []);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [newPreviews, setNewPreviews] = useState<string[]>([]);
@@ -39,20 +49,50 @@ export default function ProductForm({ product, categories }: Props) {
     e.preventDefault();
     const form = formRef.current;
     if (!form) return;
-    const fd = new FormData(form);
-    fd.set("existing_images", JSON.stringify(existingImages));
-    fd.delete("new_images");
-    newFiles.forEach((f) => fd.append("new_images", f));
     setError("");
+    setUploadProgress("");
 
     startTransition(async () => {
+      // Upload images directly to storage via the API route
+      const uploadedUrls: string[] = [];
+      if (newFiles.length > 0) {
+        setUploadProgress(`Uploading ${newFiles.length} image${newFiles.length > 1 ? "s" : ""}…`);
+        for (let i = 0; i < newFiles.length; i++) {
+          try {
+            setUploadProgress(`Uploading image ${i + 1} of ${newFiles.length}…`);
+            const url = await uploadToStorage(newFiles[i]);
+            uploadedUrls.push(url);
+          } catch (err) {
+            setError(`Image upload failed: ${(err as Error).message}`);
+            setUploadProgress("");
+            return;
+          }
+        }
+        setUploadProgress("");
+      }
+
+      // Build FormData with text fields + pre-uploaded URLs only (no file blobs)
+      const fd = new FormData(form);
+      fd.set("existing_images", JSON.stringify(existingImages));
+      fd.set("uploaded_urls", JSON.stringify(uploadedUrls));
+      fd.delete("new_images"); // never send file blobs to server actions
+
       const action = product ? updateProduct : addProduct;
-      const result = await action(fd);
-      if (result?.error) setError(result.error);
+      try {
+        const result = await action(fd);
+        if (result?.error) setError(result.error);
+      } catch (err) {
+        // redirect() throws — that's expected and means success
+        const msg = (err as Error).message ?? "";
+        if (!msg.includes("NEXT_REDIRECT")) {
+          setError(`Unexpected error: ${msg}`);
+        }
+      }
     });
   }
 
   const totalImages = existingImages.length + newFiles.length;
+  const busy = isPending;
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="max-w-2xl space-y-6">
@@ -61,7 +101,7 @@ export default function ProductForm({ product, categories }: Props) {
       {/* Images */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-3">
-          Images <span className="text-gray-400 font-normal">(up to 4)</span>
+          Images <span className="text-gray-400 font-normal">(up to 4, max 10 MB each)</span>
         </label>
         <div className="flex gap-3 flex-wrap">
           {existingImages.map((url) => (
@@ -92,7 +132,13 @@ export default function ProductForm({ product, categories }: Props) {
             <label className="w-24 h-24 border-2 border-dashed border-gray-200 rounded flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors bg-gray-50">
               <span className="text-2xl text-gray-300 leading-none mb-1">+</span>
               <span className="text-xs text-gray-400">Add image</span>
-              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => addFiles(e.target.files)}
+              />
             </label>
           )}
         </div>
@@ -127,7 +173,7 @@ export default function ProductForm({ product, categories }: Props) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Price * <span className="text-gray-400 font-normal">(cents)</span>
+            Price * <span className="text-gray-400 font-normal">(cents — e.g. 2999 = $29.99)</span>
           </label>
           <input
             name="price"
@@ -136,12 +182,12 @@ export default function ProductForm({ product, categories }: Props) {
             required
             min="1"
             className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent"
-            placeholder="e.g. 2999 = $29.99"
+            placeholder="2999"
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Compare-at price <span className="text-gray-400 font-normal">(cents)</span>
+            Compare-at price <span className="text-gray-400 font-normal">(cents, optional)</span>
           </label>
           <input
             name="compare_at_price"
@@ -149,7 +195,7 @@ export default function ProductForm({ product, categories }: Props) {
             defaultValue={product?.compareAtPrice ?? ""}
             min="1"
             className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent"
-            placeholder="Original price (for sale)"
+            placeholder="Original price for sale badge"
           />
         </div>
       </div>
@@ -181,17 +227,31 @@ export default function ProductForm({ product, categories }: Props) {
         </div>
       </div>
 
+      {uploadProgress && (
+        <p className="text-sm text-blue-600 bg-blue-50 border border-blue-100 rounded px-3 py-2">
+          {uploadProgress}
+        </p>
+      )}
+
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded px-3 py-2">{error}</p>
+        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded px-3 py-2">
+          {error}
+        </p>
       )}
 
       <div className="flex items-center gap-3 pt-2">
         <button
           type="submit"
-          disabled={isPending}
-          className="bg-black text-white text-sm font-medium px-6 py-2.5 hover:bg-gray-900 disabled:opacity-50 transition-colors"
+          disabled={busy}
+          className="bg-black text-white text-sm font-medium px-6 py-2.5 hover:bg-gray-900 disabled:opacity-50 transition-colors rounded"
         >
-          {isPending ? "Saving…" : product ? "Update Product" : "Add Product"}
+          {busy
+            ? uploadProgress
+              ? "Uploading…"
+              : "Saving…"
+            : product
+            ? "Update Product"
+            : "Add Product"}
         </button>
         <Link href="/admin/products" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
           Cancel

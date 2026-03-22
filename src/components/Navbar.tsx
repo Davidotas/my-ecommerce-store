@@ -230,7 +230,7 @@ export default function Navbar({ categories, settings }: Props) {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
             className="fixed top-[68px] left-0 right-0 z-40 bg-[#030607] border-b border-[rgba(255,255,255,0.2)]"
             onMouseEnter={openShop}
             onMouseLeave={closeShop}
@@ -332,7 +332,7 @@ export default function Navbar({ categories, settings }: Props) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
             className="fixed inset-0 z-40 bg-[#030607] pt-[68px] flex flex-col"
           >
             <div className="flex-1 overflow-y-auto px-6 py-8">

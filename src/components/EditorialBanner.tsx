@@ -15,7 +15,7 @@ export default function EditorialBanner() {
         initial={{ scale: 1.05 }}
         whileInView={{ scale: 1 }}
         viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
       >
         <Image
           src={EDITORIAL_IMAGE}

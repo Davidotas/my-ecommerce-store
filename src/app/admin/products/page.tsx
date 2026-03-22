@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createAdminClient } from "@/lib/supabase";
 import { fromDb, DbProduct, formatPrice } from "@/lib/products";
-import { deleteProduct } from "../actions";
+import DeleteButton from "./DeleteButton";
 
 export const dynamic = "force-dynamic";
 
@@ -92,16 +92,7 @@ export default async function AdminProductsPage() {
                       >
                         Edit
                       </Link>
-                      <form action={async (fd) => { "use server"; await deleteProduct(fd); }}>
-                        <input type="hidden" name="id" value={product.id} />
-                        <button
-                          type="submit"
-                          className="text-xs font-medium text-gray-400 hover:text-red-600 transition-colors"
-                          onClick={(e) => { if (!confirm(`Delete "${product.name}"?`)) e.preventDefault(); }}
-                        >
-                          Delete
-                        </button>
-                      </form>
+                      <DeleteButton id={product.id} name={product.name} />
                     </div>
                   </td>
                 </tr>

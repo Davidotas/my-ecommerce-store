@@ -20,7 +20,7 @@ export default function Hero({ settings }: { settings: StoreSettings | null }) {
         className="absolute inset-0"
         initial={{ scale: 1.06, opacity: 0.7 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 1.4, ease: [0.25, 0.1, 0.25, 1] }}
+        transition={{ duration: 1.4, ease: "easeOut" }}
       >
         <Image
           src={heroImage}
