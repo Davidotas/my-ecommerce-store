@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 
 const PHOTOS = [
   "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80",
@@ -12,12 +12,12 @@ const PHOTOS = [
   "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=600&q=80",
 ];
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.07 } },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, scale: 0.95 },
   visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: "easeOut" } },
 };
