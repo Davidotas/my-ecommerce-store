@@ -30,7 +30,7 @@ export default function AdminSidebar() {
       <div className="px-5 py-5 border-b border-white/10">
         <Link href="/admin" className="block">
           <Image
-            src="/mykolo logo.png"
+            src="/mykolo-logo.png"
             alt="Mykolo"
             width={120}
             height={32}

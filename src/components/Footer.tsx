@@ -74,7 +74,7 @@ export default function Footer({ categories, settings }: Props) {
           {/* Brand */}
           <div className="col-span-2 sm:col-span-1">
             <Image
-              src="/mykolo logo.png"
+              src="/mykolo-logo.png"
               alt={storeName}
               width={120}
               height={32}

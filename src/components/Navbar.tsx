@@ -109,7 +109,7 @@ export default function Navbar({ categories, settings }: Props) {
             <div className="absolute left-1/2 -translate-x-1/2">
               <Link href="/">
                 <Image
-                  src={settings?.logo_url || "/mykolo logo.png"}
+                  src={settings?.logo_url || "/mykolo-logo.png"}
                   alt={storeName}
                   width={180}
                   height={48}
