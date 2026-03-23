@@ -234,7 +234,8 @@ export default function ProductForm({ product, categories }: Props) {
                         key={i}
                         className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 group border border-gray-200"
                       >
-                        <Image src={url} alt="" fill className="object-cover" />
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="" className="absolute inset-0 w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
                           <span className="text-[10px] text-white font-medium bg-black/40 px-1.5 py-0.5 rounded">New</span>
                         </div>
