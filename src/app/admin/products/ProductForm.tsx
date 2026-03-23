@@ -305,34 +305,35 @@ export default function ProductForm({ product, categories }: Props) {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-800 mb-1.5">
-                      Price <span className="text-gray-400 font-normal text-xs">(in cents)</span>
+                      Price
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">¢</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                       <input
                         name="price"
                         type="number"
                         value={priceVal}
                         onChange={(e) => setPriceVal(e.target.value)}
                         required
-                        min="1"
-                        placeholder="2999"
+                        min="0.01"
+                        step="0.01"
+                        placeholder="29.99"
                         className="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 transition-colors"
                       />
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">e.g. 2999 = $29.99</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-800 mb-1.5">
                       Compare-at price <span className="text-gray-400 font-normal text-xs">(optional)</span>
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">¢</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                       <input
                         name="compare_at_price"
                         type="number"
-                        defaultValue={product?.compareAtPrice ?? ""}
-                        min="1"
+                        defaultValue={product?.compareAtPrice ? product.compareAtPrice / 100 : ""}
+                        min="0.01"
+                        step="0.01"
                         placeholder="—"
                         className="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 transition-colors"
                       />
@@ -348,7 +349,7 @@ export default function ProductForm({ product, categories }: Props) {
                         Cost per item <span className="text-gray-400 font-normal text-xs">(optional)</span>
                       </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">¢</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                         <input
                           type="number"
                           value={costVal}

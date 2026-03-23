@@ -17,10 +17,10 @@ export async function addProduct(formData: FormData) {
   if (!name) return { error: "Product name is required." };
   if (!priceStr) return { error: "Price is required." };
 
-  const price = parseInt(priceStr, 10);
-  if (isNaN(price) || price <= 0) return { error: "Price must be a positive number (in cents)." };
+  const price = Math.round(parseFloat(priceStr) * 100);
+  if (isNaN(price) || price <= 0) return { error: "Price must be a positive number." };
 
-  const compare_at_price = compareAtPriceStr ? parseInt(compareAtPriceStr, 10) : null;
+  const compare_at_price = compareAtPriceStr ? Math.round(parseFloat(compareAtPriceStr) * 100) : null;
   const stock = stockStr ? parseInt(stockStr, 10) : 0;
 
   let imageUrls: string[] = [];
@@ -64,10 +64,10 @@ export async function updateProduct(formData: FormData) {
   if (!name) return { error: "Product name is required." };
   if (!priceStr) return { error: "Price is required." };
 
-  const price = parseInt(priceStr, 10);
-  if (isNaN(price) || price <= 0) return { error: "Price must be a positive number (in cents)." };
+  const price = Math.round(parseFloat(priceStr) * 100);
+  if (isNaN(price) || price <= 0) return { error: "Price must be a positive number." };
 
-  const compare_at_price = compareAtPriceStr ? parseInt(compareAtPriceStr, 10) : null;
+  const compare_at_price = compareAtPriceStr ? Math.round(parseFloat(compareAtPriceStr) * 100) : null;
   const stock = stockStr ? parseInt(stockStr, 10) : 0;
 
   let existingImages: string[] = [];
