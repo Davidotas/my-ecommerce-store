@@ -60,7 +60,7 @@ export default function Navbar({ categories, settings }: Props) {
     menuTimeout.current = setTimeout(() => setShopOpen(false), 120);
   }
 
-  const storeName = settings?.store_name || "/mykolo logo.png";
+  const storeName = settings?.store_name || "Mykolo";
 
   return (
     <>
