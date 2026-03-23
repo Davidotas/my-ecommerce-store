@@ -28,7 +28,7 @@ export default function ImageGallery({ images, name }: { images: string[]; name:
                 i === active ? "ring-2 ring-black opacity-100" : "opacity-50 hover:opacity-80"
               }`}
             >
-              <Image src={img} alt={`${name} ${i + 1}`} fill className="object-cover" />
+              <Image src={img} alt={`${name} ${i + 1}`} fill unoptimized className="object-cover" />
             </button>
           ))}
         </div>
@@ -41,6 +41,7 @@ export default function ImageGallery({ images, name }: { images: string[]; name:
           alt={name}
           fill
           priority
+          unoptimized
           className="object-cover"
         />
       </div>
