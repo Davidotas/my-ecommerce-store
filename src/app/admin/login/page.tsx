@@ -10,6 +10,10 @@ export default async function LoginPage({
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
+        <div className="flex justify-center mb-8">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/mykolo-logo.png" alt="Mykolo" style={{ height: "40px", width: "auto" }} className="brightness-0 invert" />
+        </div>
         <p className="text-xs tracking-[0.3em] uppercase text-white/20 text-center mb-3">
           Admin
         </p>

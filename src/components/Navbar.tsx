@@ -108,12 +108,11 @@ export default function Navbar({ categories, settings }: Props) {
             {/* ── Center: logo ── */}
             <div className="absolute left-1/2 -translate-x-1/2">
               <Link href="/">
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={settings?.logo_url || "/mykolo-logo.png"}
                   alt={storeName}
-                  width={180}
-                  height={48}
-                  className="h-12 w-auto object-contain"
+                  style={{ height: "40px", width: "auto" }}
                 />
               </Link>
             </div>

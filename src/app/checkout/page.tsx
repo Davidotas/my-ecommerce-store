@@ -50,6 +50,12 @@ export default function CheckoutPage() {
 
   return (
     <div className="pt-12 min-h-screen">
+      <div className="flex justify-center pt-8 pb-4">
+        <a href="/">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/mykolo-logo.png" alt="Mykolo" style={{ height: "40px", width: "auto" }} />
+        </a>
+      </div>
       <div className="px-6 lg:px-10 py-12 border-b border-white/8">
         <p className="text-xs tracking-[0.25em] uppercase text-white/30 mb-2">Checkout</p>
         <h1 className="text-3xl font-light text-white">Order Summary</h1>

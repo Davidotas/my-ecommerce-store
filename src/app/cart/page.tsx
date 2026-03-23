@@ -42,6 +42,12 @@ export default function CartPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-28">
+      <div className="flex justify-center mb-10">
+        <Link href="/">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/mykolo-logo.png" alt="Mykolo" style={{ height: "40px", width: "auto" }} />
+        </Link>
+      </div>
       <h1 className="text-2xl text-white mb-8">
         Shopping Bag ({items.length})
       </h1>
