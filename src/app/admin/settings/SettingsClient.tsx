@@ -36,7 +36,7 @@ export default function SettingsClient({ settings }: { settings: StoreSettings |
             <input
               name="store_name"
               defaultValue={settings?.store_name ?? "MYSTORE"}
-              className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20"
+              className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20"
             />
           </div>
 
@@ -116,7 +116,7 @@ export default function SettingsClient({ settings }: { settings: StoreSettings |
             <input
               name="hero_title"
               defaultValue={settings?.hero_title ?? "New Season Arrivals"}
-              className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20"
+              className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20"
             />
           </div>
 
@@ -125,7 +125,7 @@ export default function SettingsClient({ settings }: { settings: StoreSettings |
             <input
               name="hero_subtitle"
               defaultValue={settings?.hero_subtitle ?? ""}
-              className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20"
+              className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20"
               placeholder="A short tagline shown below the title"
             />
           </div>
@@ -140,7 +140,7 @@ export default function SettingsClient({ settings }: { settings: StoreSettings |
           <select
             name="base_currency"
             defaultValue={settings?.base_currency ?? "USD"}
-            className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 bg-white"
+            className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20 bg-white"
           >
             {(Object.values(CURRENCIES) as typeof CURRENCIES[CurrencyCode][]).map((c) => (
               <option key={c.code} value={c.code}>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { logout } from "./actions";
 import {
@@ -28,8 +29,14 @@ export default function AdminSidebar() {
       {/* Brand */}
       <div className="px-5 py-5 border-b border-white/10">
         <Link href="/admin" className="block">
-          <span className="text-white font-bold text-sm tracking-wider">MYSTORE</span>
-          <p className="text-white/30 text-xs mt-0.5">Admin</p>
+          <Image
+            src="/mykolo logo.png"
+            alt="Mykolo"
+            width={120}
+            height={32}
+            className="object-contain brightness-0 invert"
+          />
+          <p className="text-white/30 text-xs mt-1">Admin</p>
         </Link>
       </div>
 

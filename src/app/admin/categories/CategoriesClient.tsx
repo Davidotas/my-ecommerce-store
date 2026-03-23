@@ -42,7 +42,7 @@ export default function CategoriesClient({ categories }: { categories: Category[
             type="text"
             required
             placeholder="Category name (e.g. Clothing)"
-            className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20"
+            className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20"
           />
           {error && <p className="text-xs text-red-600">{error}</p>}
           <button
@@ -72,7 +72,7 @@ export default function CategoriesClient({ categories }: { categories: Category[
                     <input
                       name="name"
                       defaultValue={editName}
-                      className="flex-1 border border-gray-300 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20"
+                      className="flex-1 border border-gray-300 rounded px-2.5 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/20"
                       autoFocus
                     />
                     <button type="submit" disabled={isPending} className="text-xs font-medium text-black bg-gray-100 px-3 py-1.5 rounded hover:bg-gray-200">

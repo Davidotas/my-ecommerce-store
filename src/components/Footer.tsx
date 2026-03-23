@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useCurrency } from "@/context/CurrencyContext";
 import { CURRENCIES, CurrencyCode } from "@/lib/currency";
 import { Category, StoreSettings } from "@/lib/products";
@@ -72,7 +73,13 @@ export default function Footer({ categories, settings }: Props) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-10 mb-14">
           {/* Brand */}
           <div className="col-span-2 sm:col-span-1">
-            <p className="text-xs tracking-[0.35em] uppercase font-bold text-white mb-4">{storeName}</p>
+            <Image
+              src="/mykolo logo.png"
+              alt={storeName}
+              width={120}
+              height={32}
+              className="object-contain brightness-0 invert mb-4"
+            />
             <p className="text-[#9c9381] text-xs leading-relaxed mb-6 max-w-[180px]">
               Curated pieces for the modern wardrobe. Timeless style, delivered worldwide.
             </p>

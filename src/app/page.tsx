@@ -6,7 +6,6 @@ import Marquee from "@/components/Marquee";
 import FeaturedCategories from "@/components/FeaturedCategories";
 import NewArrivalsGrid from "@/components/NewArrivalsGrid";
 import EditorialBanner from "@/components/EditorialBanner";
-import InstagramGrid from "@/components/InstagramGrid";
 import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
 import CategoryFilter from "@/components/CategoryFilter";
@@ -106,10 +105,7 @@ export default async function HomePage({
         )}
       </section>
 
-      {/* 7. Instagram Grid */}
-      <InstagramGrid />
-
-      {/* 8. Newsletter */}
+      {/* 7. Newsletter */}
       <Newsletter />
 
       {/* 9. Footer */}

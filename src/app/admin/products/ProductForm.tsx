@@ -152,7 +152,7 @@ export default function ProductForm({ product, categories }: Props) {
           type="text"
           defaultValue={product?.name}
           required
-          className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent"
+          className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent text-gray-900"
           placeholder="Product name"
         />
       </div>
@@ -181,7 +181,7 @@ export default function ProductForm({ product, categories }: Props) {
             defaultValue={product?.price}
             required
             min="1"
-            className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent"
+            className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent text-gray-900"
             placeholder="2999"
           />
         </div>
@@ -194,7 +194,7 @@ export default function ProductForm({ product, categories }: Props) {
             type="number"
             defaultValue={product?.compareAtPrice ?? ""}
             min="1"
-            className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent"
+            className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent text-gray-900"
             placeholder="Original price for sale badge"
           />
         </div>
@@ -207,7 +207,7 @@ export default function ProductForm({ product, categories }: Props) {
           <select
             name="category_id"
             defaultValue={product?.categoryId ?? ""}
-            className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent bg-white"
+            className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent bg-white text-gray-900"
           >
             <option value="">No category</option>
             {categories.map((cat) => (
@@ -222,7 +222,7 @@ export default function ProductForm({ product, categories }: Props) {
             type="number"
             defaultValue={product?.stock ?? 0}
             min="0"
-            className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent"
+            className="w-full border border-gray-300 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-transparent text-gray-900"
           />
         </div>
       </div>
