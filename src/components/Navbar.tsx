@@ -9,6 +9,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { CURRENCIES, CurrencyCode } from "@/lib/currency";
 import { Category, StoreSettings } from "@/lib/products";
+import AccountMenu from "./AccountMenu";
 
 type Props = { categories: Category[]; settings: StoreSettings | null };
 
@@ -144,6 +145,9 @@ export default function Navbar({ categories, settings }: Props) {
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* Account */}
+              <AccountMenu />
 
               {/* Wishlist */}
               <motion.div whileHover={{ scale: 1.05 }}>

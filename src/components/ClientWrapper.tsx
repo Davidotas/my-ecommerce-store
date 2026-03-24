@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CartProvider } from "@/context/CartContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import { WishlistProvider } from "@/context/WishlistContext";
+import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "./Navbar";
 import { Category, StoreSettings } from "@/lib/products";
 
@@ -25,6 +26,7 @@ export default function ClientWrapper({ children, categories, settings }: Props)
   const isAdmin = pathname?.startsWith("/admin");
 
   return (
+    <AuthProvider>
     <CurrencyProvider>
       <CartProvider>
         <WishlistProvider>
@@ -43,5 +45,6 @@ export default function ClientWrapper({ children, categories, settings }: Props)
         </WishlistProvider>
       </CartProvider>
     </CurrencyProvider>
+    </AuthProvider>
   );
 }
