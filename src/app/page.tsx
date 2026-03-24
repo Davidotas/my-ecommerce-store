@@ -9,7 +9,7 @@ import EditorialBanner from "@/components/EditorialBanner";
 import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
 import CategoryFilter from "@/components/CategoryFilter";
-import ProductCard from "@/components/ProductCard";
+import EditorialProductGrid from "@/components/EditorialProductGrid";
 export const revalidate = 60;
 
 export default async function HomePage({
@@ -89,36 +89,39 @@ export default async function HomePage({
       {/* 5. Editorial Banner */}
       {!isFiltered && <EditorialBanner />}
 
-      {/* 6. All Products / Filtered Grid */}
-      <section id={isFiltered ? "products" : "all-products"} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="flex items-end justify-between mb-12 gap-4 flex-wrap">
-          <div>
-            <p className="text-[11px] tracking-[0.5em] uppercase font-medium text-[#6b7280] mb-2">
-              {isFiltered ? "Filtered" : "The collection"}
-            </p>
-            <h2 className="text-3xl sm:text-4xl text-[#111111]">
-              {categorySlug
-                ? categories.find((c) => c.slug === categorySlug)?.name ?? "Products"
-                : "All Products"}
-            </h2>
-            <p className="text-sm text-[#9ca3af] mt-1">{products.length} items</p>
+      {/* 6. All Products / Filtered Grid — editorial cream layout */}
+      <section
+        id={isFiltered ? "products" : "all-products"}
+        className="py-24"
+        style={{ background: "#f5f0eb" }}
+      >
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+          {/* Heading row */}
+          <div className="flex items-end justify-between mb-14 gap-4 flex-wrap">
+            <div>
+              <p className="text-[11px] tracking-[0.5em] uppercase font-medium text-[#9ca3af] mb-3">
+                {isFiltered ? "Filtered" : "The collection"}
+              </p>
+              <h2 className="text-[clamp(36px,4vw,56px)] text-[#111111] leading-none">
+                {categorySlug
+                  ? categories.find((c) => c.slug === categorySlug)?.name ?? "Products"
+                  : "All Products"}
+              </h2>
+              <p className="text-sm text-[#9ca3af] mt-2">{products.length} pieces</p>
+            </div>
+            <Suspense>
+              <CategoryFilter categories={categories} currentSlug={categorySlug} />
+            </Suspense>
           </div>
-          <Suspense>
-            <CategoryFilter categories={categories} currentSlug={categorySlug} />
-          </Suspense>
-        </div>
 
-        {products.length === 0 ? (
-          <div className="text-center py-24">
-            <p className="text-[#9ca3af] text-sm">No products found.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
+          {products.length === 0 ? (
+            <div className="text-center py-24">
+              <p className="text-[#9ca3af] text-sm">No products found.</p>
+            </div>
+          ) : (
+            <EditorialProductGrid products={products} />
+          )}
+        </div>
       </section>
 
       {/* 7. Newsletter */}

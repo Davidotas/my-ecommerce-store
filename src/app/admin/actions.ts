@@ -11,6 +11,7 @@ export async function addProduct(formData: FormData) {
   const priceStr = formData.get("price") as string;
   const compareAtPriceStr = formData.get("compare_at_price") as string;
   const categoryId = (formData.get("category_id") as string) || null;
+  const categoryName = (formData.get("category_name") as string) || null;
   const stockStr = formData.get("stock") as string;
   const uploadedUrlsStr = formData.get("uploaded_urls") as string;
 
@@ -37,6 +38,7 @@ export async function addProduct(formData: FormData) {
     price,
     compare_at_price,
     category_id: categoryId || null,
+    category: categoryName || null,
     stock,
     image_url: imageUrls[0] ?? "",
     images: imageUrls,
@@ -56,6 +58,7 @@ export async function updateProduct(formData: FormData) {
   const priceStr = formData.get("price") as string;
   const compareAtPriceStr = formData.get("compare_at_price") as string;
   const categoryId = (formData.get("category_id") as string) || null;
+  const categoryName = (formData.get("category_name") as string) || null;
   const stockStr = formData.get("stock") as string;
   const existingImagesStr = formData.get("existing_images") as string;
   const uploadedUrlsStr = formData.get("uploaded_urls") as string;
@@ -89,6 +92,7 @@ export async function updateProduct(formData: FormData) {
       price,
       compare_at_price,
       category_id: categoryId || null,
+      category: categoryName || null,
       stock,
       image_url: images[0] ?? "",
       images,

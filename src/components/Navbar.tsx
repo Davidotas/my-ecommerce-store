@@ -27,7 +27,7 @@ const navLinks = [
 ];
 
 export default function Navbar({ categories, settings }: Props) {
-  const { totalItems } = useCart();
+  const { totalItems, lastAdded } = useCart();
   const { count: wishlistCount } = useWishlist();
   const { currency, setCurrency } = useCurrency();
 
@@ -39,6 +39,8 @@ export default function Navbar({ categories, settings }: Props) {
 
   const shopRef = useRef<HTMLDivElement>(null);
   const menuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevLastAdded = useRef(lastAdded);
+  const [cartBounce, setCartBounce] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -51,6 +53,15 @@ export default function Navbar({ categories, settings }: Props) {
     else document.body.style.overflow = "";
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
+
+  useEffect(() => {
+    if (lastAdded !== prevLastAdded.current) {
+      prevLastAdded.current = lastAdded;
+      setCartBounce(true);
+      const t = setTimeout(() => setCartBounce(false), 700);
+      return () => clearTimeout(t);
+    }
+  }, [lastAdded]);
 
   const openShop  = () => { if (menuTimeout.current) clearTimeout(menuTimeout.current); setShopOpen(true); };
   const closeShop = () => { menuTimeout.current = setTimeout(() => setShopOpen(false), 120); };
@@ -150,7 +161,11 @@ export default function Navbar({ categories, settings }: Props) {
               </motion.div>
 
               {/* Cart */}
-              <motion.div whileHover={{ scale: 1.05 }}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                animate={cartBounce ? { scale: [1, 1.35, 0.85, 1.15, 1], rotate: [-8, 8, -4, 0] } : {}}
+                transition={cartBounce ? { duration: 0.55, ease: "easeInOut" } : {}}
+              >
                 <Link href="/cart" className="relative flex items-center justify-center w-9 h-9 text-[#6b7280] hover:text-[#111111] transition-colors duration-200" aria-label="Cart">
                   <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />

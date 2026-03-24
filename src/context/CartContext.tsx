@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useReducer, ReactNode } from "react";
+import { createContext, useContext, useReducer, useState, ReactNode } from "react";
 import { Product } from "@/lib/products";
 
 export type CartItem = Product & { quantity: number };
@@ -52,12 +52,14 @@ type CartContextType = {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  lastAdded: number; // increments on each addItem — use to trigger navbar bounce
 };
 
 const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
+  const [lastAdded, setLastAdded] = useState(0);
 
   const totalItems = state.items.reduce((sum, i) => sum + i.quantity, 0);
   const totalPrice = state.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
@@ -66,13 +68,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     <CartContext.Provider
       value={{
         items: state.items,
-        addItem: (product) => dispatch({ type: "ADD_ITEM", product }),
+        addItem: (product) => {
+          dispatch({ type: "ADD_ITEM", product });
+          setLastAdded((n) => n + 1);
+        },
         removeItem: (id) => dispatch({ type: "REMOVE_ITEM", id }),
         updateQuantity: (id, quantity) =>
           dispatch({ type: "UPDATE_QUANTITY", id, quantity }),
         clearCart: () => dispatch({ type: "CLEAR_CART" }),
         totalItems,
         totalPrice,
+        lastAdded,
       }}
     >
       {children}
