@@ -17,23 +17,32 @@ export default async function AdminPagesPage() {
     safeQuery(() => supabase.from("store_settings").select("*").maybeSingle() as PromiseLike<{ data: unknown | null }>),
   ]);
 
+  type S = {
+    hero_title?: string; hero_subtitle?: string; hero_image_url?: string;
+    hero_button_text?: string; hero_button_link?: string;
+    marquee_bg_color?: string; marquee_text_color?: string;
+  } | null;
+
+  const s = settings as S;
+
   return (
     <PagesClient
       marqueeItems={(marqueeItems as { id: string; text: string; is_active: boolean; order_index: number }[]) ?? []}
       pageSections={(pageSections as { id: string; section_key: string; title: string; is_visible: boolean; order_index: number }[]) ?? []}
       navLinks={(navLinks as { id: string; label: string; href: string; is_active: boolean; order_index: number }[]) ?? []}
       footerConfig={footerConfig as {
-        copyright_text: string;
-        social_instagram: string;
-        social_tiktok: string;
-        social_pinterest: string;
-        info_links: { label: string; href: string }[];
+        copyright_text: string; social_instagram: string; social_tiktok: string;
+        social_pinterest: string; info_links: { label: string; href: string }[];
         support_links: { label: string; href: string }[];
       } | null}
       banners={(banners as { id: string; title: string; subtitle: string; image_url: string; link_url: string; is_active: boolean; order_index: number }[]) ?? []}
-      heroTitle={(settings as { hero_title?: string } | null)?.hero_title ?? ""}
-      heroSubtitle={(settings as { hero_subtitle?: string } | null)?.hero_subtitle ?? ""}
-      heroImageUrl={(settings as { hero_image_url?: string } | null)?.hero_image_url ?? ""}
+      heroTitle={s?.hero_title ?? ""}
+      heroSubtitle={s?.hero_subtitle ?? ""}
+      heroImageUrl={s?.hero_image_url ?? ""}
+      heroButtonText={s?.hero_button_text ?? "Shop Now"}
+      heroButtonLink={s?.hero_button_link ?? "/#products"}
+      marqueeBgColor={s?.marquee_bg_color ?? "#111111"}
+      marqueeTextColor={s?.marquee_text_color ?? "#ffffff"}
     />
   );
 }

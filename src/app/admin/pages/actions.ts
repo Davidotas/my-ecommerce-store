@@ -6,7 +6,6 @@ import { revalidatePath } from "next/cache";
 // ── Marquee ─────────────────────────────────────────────────────────────────
 
 export async function saveMarqueeItems(items: { id?: string; text: string; is_active: boolean; order_index: number }[]) {
-  // Delete all and re-insert (simple approach for small lists)
   await supabase.from("marquee_items").delete().neq("id", "00000000-0000-0000-0000-000000000000");
   if (items.length > 0) {
     await supabase.from("marquee_items").insert(items.map((item, i) => ({
@@ -15,6 +14,14 @@ export async function saveMarqueeItems(items: { id?: string; text: string; is_ac
       order_index: i,
     })));
   }
+  revalidatePath("/");
+}
+
+export async function saveMarqueeColors(bgColor: string, textColor: string) {
+  await supabase
+    .from("store_settings")
+    .update({ marquee_bg_color: bgColor, marquee_text_color: textColor })
+    .eq("id", "00000000-0000-0000-0000-000000000001");
   revalidatePath("/");
 }
 
@@ -60,8 +67,6 @@ export async function saveFooterConfig(data: {
   await supabase.from("footer_config").upsert({
     id: "00000000-0000-0000-0000-000000000002",
     ...data,
-    info_links: data.info_links,
-    support_links: data.support_links,
     updated_at: new Date().toISOString(),
   });
   revalidatePath("/");
@@ -78,10 +83,11 @@ export async function saveBanner(banner: {
   is_active: boolean;
   order_index: number;
 }) {
-  if (banner.id) {
-    await supabase.from("banners").update({ ...banner }).eq("id", banner.id);
+  const { id, ...rest } = banner;
+  if (id) {
+    await supabase.from("banners").update(rest).eq("id", id);
   } else {
-    await supabase.from("banners").insert({ ...banner });
+    await supabase.from("banners").insert(rest);
   }
   revalidatePath("/");
 }
@@ -91,9 +97,18 @@ export async function deleteBanner(id: string) {
   revalidatePath("/");
 }
 
-// ── Hero (reuses store_settings) ─────────────────────────────────────────────
+// ── Hero ─────────────────────────────────────────────────────────────────────
 
-export async function saveHeroSettings(data: { hero_title: string; hero_subtitle: string; hero_image_url: string }) {
-  await supabase.from("store_settings").update(data).eq("id", "00000000-0000-0000-0000-000000000001");
+export async function saveHeroSettings(data: {
+  hero_title: string;
+  hero_subtitle: string;
+  hero_image_url: string;
+  hero_button_text: string;
+  hero_button_link: string;
+}) {
+  await supabase
+    .from("store_settings")
+    .update(data)
+    .eq("id", "00000000-0000-0000-0000-000000000001");
   revalidatePath("/");
 }

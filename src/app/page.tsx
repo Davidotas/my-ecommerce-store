@@ -74,7 +74,11 @@ export default async function HomePage({
       <Hero settings={settings} />
 
       {/* 2. Marquee ticker */}
-      <Marquee items={marqueeItems} />
+      <Marquee
+        items={marqueeItems}
+        bgColor={settings?.marquee_bg_color || "#111111"}
+        textColor={settings?.marquee_text_color || "#ffffff"}
+      />
 
       {/* 3. Featured Categories */}
       <FeaturedCategories categories={categories} />

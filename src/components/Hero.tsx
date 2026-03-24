@@ -11,8 +11,9 @@ const FALLBACK_IMAGE =
 export default function Hero({ settings }: { settings: StoreSettings | null }) {
   const heroImage = settings?.hero_image_url || FALLBACK_IMAGE;
   const title = settings?.hero_title || "New Season Arrivals";
-  const subtitle =
-    settings?.hero_subtitle || "Discover curated pieces for the modern wardrobe.";
+  const subtitle = settings?.hero_subtitle || "Discover curated pieces for the modern wardrobe.";
+  const buttonText = settings?.hero_button_text || "Shop Now";
+  const buttonLink = settings?.hero_button_link || "/#products";
 
   return (
     <div className="relative h-[92vh] min-h-[600px] overflow-hidden bg-[#f9fafb]">
@@ -72,10 +73,10 @@ export default function Hero({ settings }: { settings: StoreSettings | null }) {
           transition={{ duration: 0.6, delay: 0.75 }}
         >
           <Link
-            href="/#products"
+            href={buttonLink}
             className="bg-[#111111] text-white text-sm font-medium px-8 py-4 hover:bg-[#333333] transition-colors"
           >
-            Shop Now
+            {buttonText}
           </Link>
           <Link
             href="/#categories"

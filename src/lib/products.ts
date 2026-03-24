@@ -40,6 +40,10 @@ export type StoreSettings = {
   hero_image_url: string;
   hero_title: string;
   hero_subtitle: string;
+  hero_button_text: string;
+  hero_button_link: string;
+  marquee_bg_color: string;
+  marquee_text_color: string;
   base_currency: string;
 };
 
