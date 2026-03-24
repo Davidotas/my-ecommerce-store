@@ -5,26 +5,17 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { CURRENCIES, CurrencyCode } from "@/lib/currency";
 import { Category, StoreSettings } from "@/lib/products";
 
-const SHOP_LINKS = [
-  { label: "New Arrivals", href: "/" },
-  { label: "Women", href: "/?category=women" },
-  { label: "Men", href: "/?category=men" },
-  { label: "Accessories", href: "/?category=accessories" },
-  { label: "Sale", href: "/?category=sale" },
-];
-
 const INFO_LINKS = [
-  { label: "About Us", href: "/" },
-  { label: "Sustainability", href: "/" },
-  { label: "Careers", href: "/" },
-  { label: "Press", href: "/" },
+  { label: "About Us", href: "/about" },
+  { label: "Sustainability", href: "/about" },
+  { label: "Careers", href: "/about" },
+  { label: "Press", href: "/about" },
 ];
 
 const SUPPORT_LINKS = [
-  { label: "FAQ", href: "/" },
-  { label: "Shipping & Returns", href: "/" },
-  { label: "Size Guide", href: "/" },
-  { label: "Contact Us", href: "/" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Shipping & Returns", href: "/shipping" },
+  { label: "Contact Us", href: "/contact" },
 ];
 
 const SOCIALS = [
@@ -66,7 +57,7 @@ export default function Footer({ categories, settings }: Props) {
   const storeName = settings?.store_name || "MYSTORE";
 
   return (
-    <footer className="bg-[#030607] border-t border-[rgba(255,255,255,0.2)] text-white">
+    <footer className="bg-white border-t border-[#e5e7eb] text-[#111111]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10">
         {/* Top grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-10 mb-14">
@@ -77,9 +68,9 @@ export default function Footer({ categories, settings }: Props) {
               src="/mykolo-logo.png"
               alt={storeName}
               style={{ height: "40px", width: "auto" }}
-              className="brightness-0 invert mb-4"
+              className="mb-4"
             />
-            <p className="text-[#9c9381] text-xs leading-relaxed mb-6 max-w-[180px]">
+            <p className="text-[#6b7280] text-xs leading-relaxed mb-6 max-w-[180px]">
               Curated pieces for the modern wardrobe. Timeless style, delivered worldwide.
             </p>
             <div className="flex items-center gap-3">
@@ -90,7 +81,7 @@ export default function Footer({ categories, settings }: Props) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="text-[#9c9381] hover:text-[#d2ff1f] transition-colors"
+                  className="text-[#6b7280] hover:text-[#111111] transition-colors"
                 >
                   {s.icon}
                 </a>
@@ -100,14 +91,14 @@ export default function Footer({ categories, settings }: Props) {
 
           {/* Shop */}
           <div>
-            <p className="text-[10px] tracking-[0.25em] uppercase text-[#9c9381] mb-4">Shop</p>
+            <p className="text-[10px] tracking-[0.25em] uppercase text-[#6b7280] mb-4">Shop</p>
             <ul className="space-y-2.5">
               {(categories && categories.length > 0
                 ? categories.map((c) => ({ label: c.name, href: `/?category=${c.slug}` }))
-                : SHOP_LINKS
+                : [{ label: "All Products", href: "/" }]
               ).map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-xs text-[#9c9381] hover:text-white transition-colors">
+                  <Link href={link.href} className="text-xs text-[#6b7280] hover:text-[#111111] transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -117,11 +108,11 @@ export default function Footer({ categories, settings }: Props) {
 
           {/* Info */}
           <div>
-            <p className="text-[10px] tracking-[0.25em] uppercase text-[#9c9381] mb-4">Company</p>
+            <p className="text-[10px] tracking-[0.25em] uppercase text-[#6b7280] mb-4">Company</p>
             <ul className="space-y-2.5">
               {INFO_LINKS.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-xs text-[#9c9381] hover:text-white transition-colors">
+                  <Link href={link.href} className="text-xs text-[#6b7280] hover:text-[#111111] transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -131,11 +122,11 @@ export default function Footer({ categories, settings }: Props) {
 
           {/* Support */}
           <div>
-            <p className="text-[10px] tracking-[0.25em] uppercase text-[#9c9381] mb-4">Support</p>
+            <p className="text-[10px] tracking-[0.25em] uppercase text-[#6b7280] mb-4">Support</p>
             <ul className="space-y-2.5">
               {SUPPORT_LINKS.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-xs text-[#9c9381] hover:text-white transition-colors">
+                  <Link href={link.href} className="text-xs text-[#6b7280] hover:text-[#111111] transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -145,21 +136,21 @@ export default function Footer({ categories, settings }: Props) {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-[rgba(255,255,255,0.2)] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[10px] text-[#9c9381] tracking-wide">
+        <div className="border-t border-[#e5e7eb] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-[10px] text-[#9ca3af] tracking-wide">
             © {new Date().getFullYear()} {storeName}. All rights reserved.
           </p>
 
           {/* Currency selector */}
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-[#9c9381] uppercase tracking-wider">Currency:</span>
+            <span className="text-[10px] text-[#9ca3af] uppercase tracking-wider">Currency:</span>
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
-              className="bg-transparent text-[#9c9381] text-[10px] uppercase tracking-wider border border-[rgba(255,255,255,0.2)] px-2 py-1 outline-none hover:border-white transition-colors cursor-pointer"
+              className="bg-white text-[#6b7280] text-[10px] uppercase tracking-wider border border-[#e5e7eb] px-2 py-1 outline-none hover:border-[#d1d5db] transition-colors cursor-pointer"
             >
               {Object.entries(CURRENCIES).map(([code, c]) => (
-                <option key={code} value={code} className="bg-[#030607] text-white">
+                <option key={code} value={code}>
                   {c.flag} {code}
                 </option>
               ))}
@@ -167,9 +158,9 @@ export default function Footer({ categories, settings }: Props) {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link href="/" className="text-[10px] text-[#9c9381] hover:text-white transition-colors">Privacy</Link>
-            <Link href="/" className="text-[10px] text-[#9c9381] hover:text-white transition-colors">Terms</Link>
-            <Link href="/" className="text-[10px] text-[#9c9381] hover:text-white transition-colors">Cookies</Link>
+            <Link href="/privacy" className="text-[10px] text-[#9ca3af] hover:text-[#111111] transition-colors">Privacy</Link>
+            <Link href="/terms" className="text-[10px] text-[#9ca3af] hover:text-[#111111] transition-colors">Terms</Link>
+            <Link href="/shipping" className="text-[10px] text-[#9ca3af] hover:text-[#111111] transition-colors">Shipping</Link>
           </div>
         </div>
       </div>

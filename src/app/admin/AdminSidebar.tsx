@@ -10,6 +10,7 @@ import {
   ShoppingBagIcon,
   Cog6ToothIcon,
   ArrowLeftOnRectangleIcon,
+  PaintBrushIcon,
 } from "@heroicons/react/24/outline";
 
 const navItems = [
@@ -17,6 +18,7 @@ const navItems = [
   { href: "/admin/products", label: "Products", icon: TagIcon },
   { href: "/admin/categories", label: "Categories", icon: FolderIcon },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBagIcon },
+  { href: "/admin/pages", label: "Pages", icon: PaintBrushIcon },
   { href: "/admin/settings", label: "Settings", icon: Cog6ToothIcon },
 ];
 

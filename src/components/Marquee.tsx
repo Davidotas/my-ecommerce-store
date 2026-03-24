@@ -1,6 +1,6 @@
 "use client";
 
-const ITEMS = [
+const FALLBACK_ITEMS = [
   "FREE SHIPPING ON ORDERS OVER $100",
   "NEW ARRIVALS EVERY WEEK",
   "EXCLUSIVE MEMBER DROPS",
@@ -9,17 +9,20 @@ const ITEMS = [
   "WORLDWIDE DELIVERY",
 ];
 
-const text = ITEMS.join("   ·   ");
-const repeated = `${text}   ·   ${text}`;
+type Props = { items?: string[] };
 
-export default function Marquee() {
+export default function Marquee({ items }: Props) {
+  const displayItems = items && items.length > 0 ? items : FALLBACK_ITEMS;
+  const text = displayItems.join("   ·   ");
+  const repeated = `${text}   ·   ${text}`;
+
   return (
-    <div className="bg-[#d2ff1f] py-3 overflow-hidden select-none">
+    <div className="bg-[#111111] py-3.5 overflow-hidden select-none">
       <div className="flex whitespace-nowrap animate-marquee">
-        <span className="text-[#030607] text-xs tracking-[0.2em] uppercase font-medium pr-8">
+        <span className="text-white text-[11px] tracking-[0.25em] uppercase font-medium pr-8">
           {repeated}
         </span>
-        <span className="text-[#030607] text-xs tracking-[0.2em] uppercase font-medium pr-8" aria-hidden>
+        <span className="text-white text-[11px] tracking-[0.25em] uppercase font-medium pr-8" aria-hidden>
           {repeated}
         </span>
       </div>

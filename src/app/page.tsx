@@ -10,7 +10,6 @@ import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
 import CategoryFilter from "@/components/CategoryFilter";
 import ProductCard from "@/components/ProductCard";
-
 export const revalidate = 60;
 
 export default async function HomePage({
@@ -25,8 +24,21 @@ export default async function HomePage({
     supabase.from("store_settings").select("*").maybeSingle(),
   ]);
 
+  let marqueeData: { text: string }[] | null = null;
+  try {
+    const { data } = await supabase
+      .from("marquee_items")
+      .select("text")
+      .eq("is_active", true)
+      .order("order_index");
+    marqueeData = data as { text: string }[] | null;
+  } catch {
+    // Table doesn't exist yet — use fallback items
+  }
+
   const categories = (allCategories as Category[]) ?? [];
   const settings = settingsData as StoreSettings | null;
+  const marqueeItems = (marqueeData as { text: string }[] | null)?.map((m) => m.text) ?? [];
 
   // Fetch products, optionally filtered by category
   let productsQuery = supabase
@@ -57,12 +69,12 @@ export default async function HomePage({
   const isFiltered = !!categorySlug;
 
   return (
-    <div>
+    <div className="bg-white">
       {/* 1. Hero */}
       <Hero settings={settings} />
 
       {/* 2. Marquee ticker */}
-      <Marquee />
+      <Marquee items={marqueeItems} />
 
       {/* 3. Featured Categories */}
       <FeaturedCategories categories={categories} />
@@ -74,18 +86,18 @@ export default async function HomePage({
       {!isFiltered && <EditorialBanner />}
 
       {/* 6. All Products / Filtered Grid */}
-      <section id={isFiltered ? "products" : "all-products"} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="flex items-end justify-between mb-10 gap-4 flex-wrap">
+      <section id={isFiltered ? "products" : "all-products"} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="flex items-end justify-between mb-12 gap-4 flex-wrap">
           <div>
-            <p className="text-[11px] tracking-[0.5px] uppercase font-medium text-[#9c9381] mb-2">
+            <p className="text-[11px] tracking-[0.5em] uppercase font-medium text-[#6b7280] mb-2">
               {isFiltered ? "Filtered" : "The collection"}
             </p>
-            <h2 className="text-3xl sm:text-4xl text-white">
+            <h2 className="text-3xl sm:text-4xl text-[#111111]">
               {categorySlug
                 ? categories.find((c) => c.slug === categorySlug)?.name ?? "Products"
                 : "All Products"}
             </h2>
-            <p className="text-sm text-[#9c9381] mt-1">{products.length} items</p>
+            <p className="text-sm text-[#9ca3af] mt-1">{products.length} items</p>
           </div>
           <Suspense>
             <CategoryFilter categories={categories} currentSlug={categorySlug} />
@@ -94,7 +106,7 @@ export default async function HomePage({
 
         {products.length === 0 ? (
           <div className="text-center py-24">
-            <p className="text-[#9c9381] text-sm">No products found.</p>
+            <p className="text-[#9ca3af] text-sm">No products found.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
@@ -108,7 +120,7 @@ export default async function HomePage({
       {/* 7. Newsletter */}
       <Newsletter />
 
-      {/* 9. Footer */}
+      {/* 8. Footer */}
       <Footer categories={categories} settings={settings} />
     </div>
   );

@@ -16,23 +16,21 @@ export default function CartPage() {
     setMounted(true);
   }, []);
 
-  // Render nothing until client has hydrated — prevents SSR/client mismatch
-  // on cart items (which live only in client state, never on the server).
   if (!mounted) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <span className="text-[#9c9381] text-sm">Loading…</span>
+        <span className="text-[#9ca3af] text-sm">Loading…</span>
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-5">
-        <p className="text-[#9c9381] text-sm">Your cart is empty</p>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-5 bg-white pt-[68px]">
+        <p className="text-[#6b7280] text-sm">Your cart is empty</p>
         <Link
           href="/"
-          className="text-sm text-white border-b border-white/30 pb-px hover:border-white transition-colors"
+          className="text-sm text-[#111111] border-b border-[#111111]/30 pb-px hover:border-[#111111] transition-colors"
         >
           Continue shopping
         </Link>
@@ -41,58 +39,58 @@ export default function CartPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-28">
+    <div className="bg-white min-h-screen max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-28">
       <div className="flex justify-center mb-10">
         <Link href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/mykolo-logo.png" alt="Mykolo" style={{ height: "40px", width: "auto" }} />
         </Link>
       </div>
-      <h1 className="text-2xl text-white mb-8">
+      <h1 className="text-2xl text-[#111111] mb-8">
         Shopping Bag ({items.length})
       </h1>
 
       <div className="grid lg:grid-cols-3 gap-12">
         {/* Items */}
-        <div className="lg:col-span-2 divide-y divide-[rgba(255,255,255,0.1)]">
+        <div className="lg:col-span-2 divide-y divide-[#f3f4f6]">
           {items.map((item) => (
             <div key={item.id} className="flex gap-5 py-6">
-              <div className="relative w-24 h-28 shrink-0 bg-[#0d1117] overflow-hidden">
+              <div className="relative w-24 h-28 shrink-0 bg-[#f3f4f6] overflow-hidden">
                 {item.image && (
-                  <Image src={item.image} alt={item.name} fill className="object-cover" />
+                  <Image src={item.image} alt={item.name} fill className="object-cover" unoptimized />
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between gap-4 mb-1">
-                  <h3 className="text-sm font-medium text-white">{item.name}</h3>
-                  <span className="text-sm font-medium shrink-0 text-white">
+                  <h3 className="text-sm font-medium text-[#111111]">{item.name}</h3>
+                  <span className="text-sm font-medium shrink-0 text-[#111111]">
                     {formatCurrency(item.price * item.quantity, currency)}
                   </span>
                 </div>
-                <p className="text-xs text-[#9c9381] mb-4">
+                <p className="text-xs text-[#9ca3af] mb-4">
                   {formatCurrency(item.price, currency)} each
                 </p>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center border border-[rgba(255,255,255,0.2)] w-fit">
+                  <div className="flex items-center border border-[#e5e7eb] w-fit">
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="w-8 h-8 flex items-center justify-center text-[#9c9381] hover:text-white hover:bg-white/5 transition-colors"
+                      className="w-8 h-8 flex items-center justify-center text-[#6b7280] hover:text-[#111111] hover:bg-[#f9fafb] transition-colors"
                     >
                       −
                     </button>
-                    <span className="w-8 h-8 flex items-center justify-center text-sm text-white">
+                    <span className="w-8 h-8 flex items-center justify-center text-sm text-[#111111]">
                       {item.quantity}
                     </span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="w-8 h-8 flex items-center justify-center text-[#9c9381] hover:text-white hover:bg-white/5 transition-colors"
+                      className="w-8 h-8 flex items-center justify-center text-[#6b7280] hover:text-[#111111] hover:bg-[#f9fafb] transition-colors"
                     >
                       +
                     </button>
                   </div>
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="text-xs text-[#9c9381] hover:text-[#f01919] transition-colors"
+                    className="text-xs text-[#9ca3af] hover:text-[#ef4444] transition-colors"
                   >
                     Remove
                   </button>
@@ -104,33 +102,33 @@ export default function CartPage() {
 
         {/* Summary */}
         <div className="lg:col-span-1">
-          <div className="border border-[rgba(255,255,255,0.2)] p-6">
-            <h2 className="text-xs tracking-[0.5px] uppercase font-medium text-[#9c9381] mb-6">
+          <div className="border border-[#e5e7eb] p-6">
+            <h2 className="text-xs tracking-[0.5em] uppercase font-medium text-[#6b7280] mb-6">
               Order Summary
             </h2>
             <div className="space-y-3 mb-6 text-sm">
-              <div className="flex justify-between text-[#9c9381]">
+              <div className="flex justify-between text-[#6b7280]">
                 <span>Subtotal</span>
                 <span>{formatCurrency(totalPrice, currency)}</span>
               </div>
-              <div className="flex justify-between text-[#9c9381]">
+              <div className="flex justify-between text-[#6b7280]">
                 <span>Shipping</span>
                 <span>Calculated at checkout</span>
               </div>
-              <div className="border-t border-[rgba(255,255,255,0.2)] pt-3 flex justify-between text-white">
+              <div className="border-t border-[#f3f4f6] pt-3 flex justify-between text-[#111111] font-medium">
                 <span>Total</span>
                 <span>{formatCurrency(totalPrice, currency)}</span>
               </div>
             </div>
             <Link
               href="/checkout"
-              className="block w-full bg-[#d2ff1f] text-[#030607] text-sm font-medium text-center py-3.5 hover:opacity-90 transition-opacity mb-3"
+              className="block w-full bg-[#111111] text-white text-sm font-medium text-center py-3.5 hover:bg-[#333333] transition-colors mb-3"
             >
               Proceed to Checkout
             </Link>
             <Link
               href="/"
-              className="block w-full text-center text-sm text-[#9c9381] hover:text-white transition-colors"
+              className="block w-full text-center text-sm text-[#6b7280] hover:text-[#111111] transition-colors"
             >
               Continue Shopping
             </Link>

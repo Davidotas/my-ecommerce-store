@@ -23,7 +23,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${ojuju.variable} ${inter.variable} bg-[#030607] text-white min-h-screen`} suppressHydrationWarning>
+      <body
+        className={`${ojuju.variable} ${inter.variable} bg-white text-[#111111] min-h-screen`}
+        suppressHydrationWarning
+      >
         <ClientWrapper
           categories={(categories as Category[]) ?? []}
           settings={settings as StoreSettings | null}

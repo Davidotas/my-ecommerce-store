@@ -14,7 +14,7 @@ export default function Newsletter() {
   }
 
   return (
-    <section className="bg-[#030607] border-t border-[rgba(255,255,255,0.2)] py-20">
+    <section className="bg-[#f9fafb] border-t border-[#e5e7eb] py-24">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -22,19 +22,17 @@ export default function Newsletter() {
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.7 }}
         >
-          <p className="text-[11px] tracking-[0.5px] uppercase font-medium text-[#9c9381] mb-4">Stay in the loop</p>
-          <h2
-            className="text-3xl sm:text-4xl text-white mb-4"
-          >
+          <p className="text-[11px] tracking-[0.5em] uppercase font-medium text-[#6b7280] mb-4">Stay in the loop</p>
+          <h2 className="text-3xl sm:text-4xl text-[#111111] mb-4">
             Join the Inner Circle
           </h2>
-          <p className="text-[#9c9381] text-sm mb-8 leading-relaxed">
+          <p className="text-[#6b7280] text-sm mb-10 leading-relaxed max-w-md mx-auto">
             Be the first to know about new drops, exclusive offers, and curated edits. No spam, ever.
           </p>
 
           {submitted ? (
             <motion.p
-              className="text-[#d2ff1f] text-sm tracking-wide"
+              className="text-[#111111] text-sm tracking-wide font-medium"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4 }}
@@ -49,11 +47,11 @@ export default function Newsletter() {
                 placeholder="Your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 bg-white/5 border border-[rgba(255,255,255,0.2)] text-white placeholder-[#9c9381] text-sm px-4 py-3 outline-none focus:border-white/50 transition-colors"
+                className="flex-1 bg-white border border-[#e5e7eb] text-[#111111] placeholder-[#9ca3af] text-sm px-4 py-3 outline-none focus:border-[#111111] transition-colors"
               />
               <button
                 type="submit"
-                className="bg-[#d2ff1f] text-[#030607] text-xs tracking-[0.2em] uppercase font-semibold px-6 py-3 hover:opacity-90 transition-opacity whitespace-nowrap"
+                className="bg-[#111111] text-white text-xs tracking-[0.2em] uppercase font-semibold px-6 py-3 hover:bg-[#333333] transition-colors whitespace-nowrap"
               >
                 Subscribe
               </button>

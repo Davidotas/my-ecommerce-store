@@ -30,8 +30,8 @@ export default function CategoryFilter({ categories, currentSlug }: Props) {
         onClick={() => setCategory(null)}
         className={`px-4 py-1.5 text-xs tracking-[0.5px] uppercase font-medium border transition-colors ${
           !currentSlug
-            ? "bg-[#d2ff1f] text-[#030607] border-[#d2ff1f]"
-            : "text-[#9c9381] border-[rgba(255,255,255,0.2)] hover:border-white hover:text-white"
+            ? "bg-[#111111] text-white border-[#111111]"
+            : "text-[#6b7280] border-[#e5e7eb] hover:border-[#111111] hover:text-[#111111]"
         }`}
       >
         All
@@ -42,8 +42,8 @@ export default function CategoryFilter({ categories, currentSlug }: Props) {
           onClick={() => setCategory(cat.slug)}
           className={`px-4 py-1.5 text-xs tracking-[0.5px] uppercase font-medium border transition-colors ${
             currentSlug === cat.slug
-              ? "bg-[#d2ff1f] text-[#030607] border-[#d2ff1f]"
-              : "text-[#9c9381] border-[rgba(255,255,255,0.2)] hover:border-white hover:text-white"
+              ? "bg-[#111111] text-white border-[#111111]"
+              : "text-[#6b7280] border-[#e5e7eb] hover:border-[#111111] hover:text-[#111111]"
           }`}
         >
           {cat.name}

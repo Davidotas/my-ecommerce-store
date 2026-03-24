@@ -1,25 +1,17 @@
 @import "tailwindcss";
 
-/*
-  Brand fonts — Founders Grotesk (headings) and ABC Diatype (body) are
-  premium fonts not on Google Fonts. Add your @font-face declarations
-  below once you have the font files, then the variables will pick them up.
-  System sans-serif is used as fallback in the meantime.
-*/
-
 :root {
-  --bg:        #030607;
-  --fg:        #ffffff;
+  --bg:        #ffffff;
+  --fg:        #111111;
   --accent:    #d2ff1f;
-  --secondary: #9c9381;
-  --error:     #f01919;
-  --blue:      #35b9e9;
-  --border:    rgba(255, 255, 255, 0.2);
+  --muted:     #6b7280;
+  --subtle:    #f9fafb;
+  --border:    #e5e7eb;
+  --error:     #ef4444;
 
-  --font-heading: "Founders Grotesk", sans-serif;
-  --font-body:    "ABC Diatype", sans-serif;
+  --font-heading: "Ojuju", sans-serif;
+  --font-body:    "Inter", sans-serif;
 
-  /* Tailwind compat aliases */
   --background: var(--bg);
   --foreground: var(--fg);
 }
@@ -39,27 +31,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1 {
-  font-family:    var(--font-ojuju);
-  font-weight:    400;
-  letter-spacing: -0.5px;
-}
-
-h2 {
-  font-family:    var(--font-inter);
-  font-weight:    400;
-  letter-spacing: -0.5px;
-}
-
-h3, h4, h5, h6 {
+h1, h2, h3, h4, h5, h6 {
   font-family:    var(--font-heading);
   font-weight:    400;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.03em;
 }
 
 ::selection {
   background: var(--accent);
-  color:      var(--bg);
+  color:      var(--fg);
 }
 
 @keyframes marquee {
@@ -74,4 +54,15 @@ h3, h4, h5, h6 {
 
 .animate-marquee:hover {
   animation-play-state: paused;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Clean focus rings */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

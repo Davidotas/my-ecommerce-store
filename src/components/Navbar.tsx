@@ -13,17 +13,17 @@ import { Category, StoreSettings } from "@/lib/products";
 type Props = { categories: Category[]; settings: StoreSettings | null };
 
 const CATEGORY_IMAGES = [
-  "/handcraft-collection-1.jpg",
-  "/handcraft-collection-2.jpg",
-  "/handcraft-collection-3.jpg",
-  "/handcraft-collection-4.jpg",
-  "/handcraft-collection-5.jpg",
-  "/handcraft-collection-6.jpg",
+  "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&q=80",
+  "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&q=80",
+  "https://images.unsplash.com/photo-1593641421160-97d58e2ecf38?w=600&q=80",
+  "https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&q=80",
+  "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=600&q=80",
+  "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=600&q=80",
 ];
 
 const navLinks = [
   { label: "New Arrivals", href: "/" },
-  { label: "About", href: "/" },
+  { label: "About", href: "/about" },
 ];
 
 export default function Navbar({ categories, settings }: Props) {
@@ -68,8 +68,8 @@ export default function Navbar({ categories, settings }: Props) {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           scrolled
-            ? "bg-[#030607]/90 backdrop-blur-xl border-b border-[rgba(255,255,255,0.2)]"
-            : "bg-transparent"
+            ? "bg-white/95 backdrop-blur-xl border-b border-[#e5e7eb] shadow-sm"
+            : "bg-white/80 backdrop-blur-md border-b border-[#e5e7eb]"
         }`}
       >
         <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-12">
@@ -81,7 +81,7 @@ export default function Navbar({ categories, settings }: Props) {
                 <Link
                   key={l.label}
                   href={l.href}
-                  className="text-[11px] tracking-[0.18em] uppercase font-medium text-[#9c9381] hover:text-white transition-colors"
+                  className="text-[11px] tracking-[0.18em] uppercase font-medium text-[#6b7280] hover:text-[#111111] transition-colors"
                 >
                   {l.label}
                 </Link>
@@ -90,7 +90,7 @@ export default function Navbar({ categories, settings }: Props) {
               {/* Shop mega-menu trigger */}
               <div ref={shopRef} onMouseEnter={openShop} onMouseLeave={closeShop}>
                 <button
-                  className={`flex items-center gap-1 text-[11px] tracking-[0.18em] uppercase font-medium transition-colors text-[#9c9381] hover:text-white ${shopOpen ? "text-white" : ""}`}
+                  className={`flex items-center gap-1 text-[11px] tracking-[0.18em] uppercase font-medium transition-colors ${shopOpen ? "text-[#111111]" : "text-[#6b7280] hover:text-[#111111]"}`}
                 >
                   Shop
                   <motion.svg
@@ -123,7 +123,7 @@ export default function Navbar({ categories, settings }: Props) {
               <div className="relative hidden sm:block">
                 <button
                   onClick={() => setCurrencyOpen((p) => !p)}
-                  className="flex items-center gap-1.5 text-[11px] tracking-[0.12em] uppercase font-medium px-3 py-1.5 border border-[rgba(255,255,255,0.2)] bg-white/5 text-[#9c9381] hover:text-white hover:bg-white/10 transition-all duration-300"
+                  className="flex items-center gap-1.5 text-[11px] tracking-[0.12em] uppercase font-medium px-3 py-1.5 border border-[#e5e7eb] bg-[#f9fafb] text-[#6b7280] hover:text-[#111111] hover:border-[#d1d5db] transition-all duration-300"
                 >
                   <span>{CURRENCIES[currency].flag}</span>
                   <span>{currency}</span>
@@ -135,14 +135,14 @@ export default function Navbar({ categories, settings }: Props) {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 4, scale: 0.97 }}
                       transition={{ duration: 0.18 }}
-                      className="absolute right-0 top-full mt-2 bg-[#030607] border border-[rgba(255,255,255,0.2)] shadow-xl py-2 w-52 z-50"
+                      className="absolute right-0 top-full mt-2 bg-white border border-[#e5e7eb] shadow-lg py-2 w-52 z-50"
                     >
                       {(Object.values(CURRENCIES) as typeof CURRENCIES[CurrencyCode][]).map((c) => (
                         <button
                           key={c.code}
                           onClick={() => { setCurrency(c.code); setCurrencyOpen(false); }}
-                          className={`flex items-center gap-2.5 w-full px-4 py-2 text-xs hover:bg-white/5 transition-colors ${
-                            currency === c.code ? "text-white font-semibold" : "text-[#9c9381]"
+                          className={`flex items-center gap-2.5 w-full px-4 py-2 text-xs hover:bg-[#f9fafb] transition-colors ${
+                            currency === c.code ? "text-[#111111] font-semibold" : "text-[#6b7280]"
                           }`}
                         >
                           <span>{c.flag}</span>
@@ -157,7 +157,7 @@ export default function Navbar({ categories, settings }: Props) {
               {/* Wishlist */}
               <Link
                 href="/wishlist"
-                className="relative flex items-center justify-center w-9 h-9 border border-[rgba(255,255,255,0.2)] bg-white/5 text-[#9c9381] hover:text-white hover:bg-white/10 transition-all duration-300"
+                className="relative flex items-center justify-center w-9 h-9 border border-[#e5e7eb] bg-[#f9fafb] text-[#6b7280] hover:text-[#111111] hover:border-[#d1d5db] hover:bg-white transition-all duration-300"
                 aria-label="Wishlist"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.6}>
@@ -168,7 +168,7 @@ export default function Navbar({ categories, settings }: Props) {
                     key={wishlistCount}
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#f01919] text-white text-[9px] font-bold flex items-center justify-center"
+                    className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#ef4444] text-white text-[9px] font-bold flex items-center justify-center rounded-full"
                   >
                     {wishlistCount}
                   </motion.span>
@@ -178,7 +178,7 @@ export default function Navbar({ categories, settings }: Props) {
               {/* Cart */}
               <Link
                 href="/cart"
-                className="relative flex items-center justify-center w-9 h-9 border border-[rgba(255,255,255,0.2)] bg-white/5 text-[#9c9381] hover:text-white hover:bg-white/10 transition-all duration-300"
+                className="relative flex items-center justify-center w-9 h-9 border border-[#e5e7eb] bg-[#f9fafb] text-[#6b7280] hover:text-[#111111] hover:border-[#d1d5db] hover:bg-white transition-all duration-300"
                 aria-label="Cart"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.6}>
@@ -189,7 +189,7 @@ export default function Navbar({ categories, settings }: Props) {
                     key={totalItems}
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#d2ff1f] text-[#030607] text-[9px] font-bold flex items-center justify-center"
+                    className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#111111] text-white text-[9px] font-bold flex items-center justify-center rounded-full"
                   >
                     {totalItems}
                   </motion.span>
@@ -198,7 +198,7 @@ export default function Navbar({ categories, settings }: Props) {
 
               {/* Mobile hamburger */}
               <button
-                className="md:hidden flex items-center justify-center w-9 h-9 border border-[rgba(255,255,255,0.2)] bg-white/5 text-[#9c9381] hover:text-white hover:bg-white/10 transition-all duration-300"
+                className="md:hidden flex items-center justify-center w-9 h-9 border border-[#e5e7eb] bg-[#f9fafb] text-[#6b7280] hover:text-[#111111] hover:bg-white transition-all duration-300"
                 onClick={() => setMobileOpen((p) => !p)}
                 aria-label="Menu"
               >
@@ -230,7 +230,7 @@ export default function Navbar({ categories, settings }: Props) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.28, ease: "easeOut" }}
-            className="fixed top-[68px] left-0 right-0 z-40 bg-[#030607] border-b border-[rgba(255,255,255,0.2)]"
+            className="fixed top-[68px] left-0 right-0 z-40 bg-white border-b border-[#e5e7eb] shadow-lg"
             onMouseEnter={openShop}
             onMouseLeave={closeShop}
           >
@@ -239,7 +239,7 @@ export default function Navbar({ categories, settings }: Props) {
 
                 {/* ── Left: category list ── */}
                 <div>
-                  <p className="text-[9px] tracking-[0.35em] uppercase text-[#9c9381] mb-6">Categories</p>
+                  <p className="text-[9px] tracking-[0.35em] uppercase text-[#6b7280] mb-6">Categories</p>
                   <ul className="space-y-1">
                     <motion.li
                       initial={{ opacity: 0, x: -12 }}
@@ -250,12 +250,12 @@ export default function Navbar({ categories, settings }: Props) {
                         href="/"
                         onClick={() => setShopOpen(false)}
                         onMouseEnter={() => setHoveredCat(-1)}
-                        className="group flex items-center justify-between py-3 border-b border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.3)] transition-all"
+                        className="group flex items-center justify-between py-3 border-b border-[#f3f4f6] hover:border-[#d1d5db] transition-all"
                       >
-                        <span className="text-sm font-medium text-[#9c9381] group-hover:text-white group-hover:translate-x-1 transition-all duration-200 inline-block">
+                        <span className="text-sm font-medium text-[#6b7280] group-hover:text-[#111111] group-hover:translate-x-1 transition-all duration-200 inline-block">
                           All Products
                         </span>
-                        <svg className="w-3 h-3 text-[#9c9381] group-hover:text-white group-hover:translate-x-1 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3 h-3 text-[#9ca3af] group-hover:text-[#111111] group-hover:translate-x-1 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </Link>
@@ -271,12 +271,12 @@ export default function Navbar({ categories, settings }: Props) {
                           href={`/?category=${cat.slug}`}
                           onClick={() => setShopOpen(false)}
                           onMouseEnter={() => setHoveredCat(i)}
-                          className="group flex items-center justify-between py-3 border-b border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.3)] transition-all"
+                          className="group flex items-center justify-between py-3 border-b border-[#f3f4f6] hover:border-[#d1d5db] transition-all"
                         >
-                          <span className="text-sm font-medium text-[#9c9381] group-hover:text-white group-hover:translate-x-1 transition-all duration-200 inline-block">
+                          <span className="text-sm font-medium text-[#6b7280] group-hover:text-[#111111] group-hover:translate-x-1 transition-all duration-200 inline-block">
                             {cat.name}
                           </span>
-                          <svg className="w-3 h-3 text-[#9c9381] group-hover:text-white group-hover:translate-x-1 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-3 h-3 text-[#9ca3af] group-hover:text-[#111111] group-hover:translate-x-1 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         </Link>
@@ -287,7 +287,7 @@ export default function Navbar({ categories, settings }: Props) {
 
                 {/* ── Right: image grid ── */}
                 <div>
-                  <p className="text-[9px] tracking-[0.35em] uppercase text-[#9c9381] mb-6">Featured</p>
+                  <p className="text-[9px] tracking-[0.35em] uppercase text-[#6b7280] mb-6">Featured</p>
                   <div className="grid grid-cols-3 gap-3">
                     {(categories.length > 0 ? categories : [{id:"a",name:"New",slug:"new"},{id:"b",name:"Women",slug:"women"},{id:"c",name:"Men",slug:"men"}]).slice(0, 6).map((cat, i) => (
                       <motion.div
@@ -299,7 +299,7 @@ export default function Navbar({ categories, settings }: Props) {
                         <Link
                           href={`/?category=${cat.slug}`}
                           onClick={() => setShopOpen(false)}
-                          className={`group relative block overflow-hidden aspect-[3/4] bg-[#030607] transition-all duration-300 ${
+                          className={`group relative block overflow-hidden aspect-[3/4] bg-[#f3f4f6] transition-all duration-300 ${
                             hoveredCat === i ? "ring-2 ring-[#d2ff1f] ring-offset-0" : ""
                           }`}
                         >
@@ -309,7 +309,7 @@ export default function Navbar({ categories, settings }: Props) {
                             fill
                             className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
                           />
-                          <div className="absolute inset-0" style={{ background: "linear-gradient(#03060700 0%, #03060799 100%)" }} />
+                          <div className="absolute inset-0" style={{ background: "linear-gradient(transparent 40%, rgba(0,0,0,0.5) 100%)" }} />
                           <div className="absolute bottom-0 left-0 right-0 p-3">
                             <p className="text-white text-xs font-semibold tracking-wide">{cat.name}</p>
                           </div>
@@ -332,19 +332,20 @@ export default function Navbar({ categories, settings }: Props) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed inset-0 z-40 bg-[#030607] pt-[68px] flex flex-col"
+            className="fixed inset-0 z-40 bg-white pt-[68px] flex flex-col"
           >
             <div className="flex-1 overflow-y-auto px-6 py-8">
-              <p className="text-[9px] tracking-[0.35em] uppercase text-[#9c9381] mb-5">Menu</p>
+              <p className="text-[9px] tracking-[0.35em] uppercase text-[#6b7280] mb-5">Menu</p>
               <ul className="space-y-0">
                 {[
                   { label: "New Arrivals", href: "/" },
                   { label: "All Products", href: "/" },
                   ...categories.map((c) => ({ label: c.name, href: `/?category=${c.slug}` })),
-                  { label: "About", href: "/" },
+                  { label: "About", href: "/about" },
+                  { label: "Contact", href: "/contact" },
                 ].map((link, i) => (
                   <motion.li
-                    key={link.label}
+                    key={link.label + i}
                     initial={{ opacity: 0, x: -16 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: i * 0.04 }}
@@ -352,10 +353,10 @@ export default function Navbar({ categories, settings }: Props) {
                     <Link
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center justify-between py-4 border-b border-[rgba(255,255,255,0.1)] text-xl font-semibold text-white hover:text-[#d2ff1f] transition-colors"
+                      className="flex items-center justify-between py-4 border-b border-[#f3f4f6] text-xl font-semibold text-[#111111] hover:text-[#6b7280] transition-colors"
                     >
                       {link.label}
-                      <svg className="w-4 h-4 text-[#9c9381]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
                       </svg>
                     </Link>
@@ -365,7 +366,7 @@ export default function Navbar({ categories, settings }: Props) {
 
               {/* Currency in mobile */}
               <div className="mt-10">
-                <p className="text-[9px] tracking-[0.35em] uppercase text-[#9c9381] mb-4">Currency</p>
+                <p className="text-[9px] tracking-[0.35em] uppercase text-[#6b7280] mb-4">Currency</p>
                 <div className="grid grid-cols-4 gap-2">
                   {(Object.values(CURRENCIES) as typeof CURRENCIES[CurrencyCode][]).map((c) => (
                     <button
@@ -373,8 +374,8 @@ export default function Navbar({ categories, settings }: Props) {
                       onClick={() => { setCurrency(c.code); }}
                       className={`flex flex-col items-center gap-1 py-2.5 border text-[10px] font-medium transition-all ${
                         currency === c.code
-                          ? "border-[#d2ff1f] bg-[#d2ff1f] text-[#030607]"
-                          : "border-[rgba(255,255,255,0.2)] bg-white/5 text-[#9c9381] hover:border-white/40"
+                          ? "border-[#111111] bg-[#111111] text-white"
+                          : "border-[#e5e7eb] bg-[#f9fafb] text-[#6b7280] hover:border-[#d1d5db]"
                       }`}
                     >
                       <span className="text-base leading-none">{c.flag}</span>
