@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { useCurrency } from "@/context/CurrencyContext";
 import { CURRENCIES, CurrencyCode } from "@/lib/currency";
 import { Category, StoreSettings } from "@/lib/products";
@@ -56,13 +58,22 @@ export default function Footer({ categories, settings }: Props) {
   const { currency, setCurrency } = useCurrency();
   const storeName = settings?.store_name || "MYSTORE";
 
+  const ref = useRef<HTMLElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+
+  const stagger = (i: number) => ({
+    initial: { opacity: 0, y: 28 },
+    animate: inView ? { opacity: 1, y: 0 } : {},
+    transition: { duration: 0.65, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] as const },
+  });
+
   return (
-    <footer className="bg-white border-t border-[#e5e7eb] text-[#111111]">
+    <footer ref={ref} className="bg-white border-t border-[#e5e7eb] text-[#111111]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10">
         {/* Top grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-10 mb-14">
           {/* Brand */}
-          <div className="col-span-2 sm:col-span-1">
+          <motion.div {...stagger(0)} className="col-span-2 sm:col-span-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/mykolo-logo.png"
@@ -87,10 +98,10 @@ export default function Footer({ categories, settings }: Props) {
                 </a>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Shop */}
-          <div>
+          <motion.div {...stagger(1)}>
             <p className="text-[10px] tracking-[0.25em] uppercase text-[#6b7280] mb-4">Shop</p>
             <ul className="space-y-2.5">
               {(categories && categories.length > 0
@@ -104,10 +115,10 @@ export default function Footer({ categories, settings }: Props) {
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
 
           {/* Info */}
-          <div>
+          <motion.div {...stagger(2)}>
             <p className="text-[10px] tracking-[0.25em] uppercase text-[#6b7280] mb-4">Company</p>
             <ul className="space-y-2.5">
               {INFO_LINKS.map((link) => (
@@ -118,10 +129,10 @@ export default function Footer({ categories, settings }: Props) {
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
 
           {/* Support */}
-          <div>
+          <motion.div {...stagger(3)}>
             <p className="text-[10px] tracking-[0.25em] uppercase text-[#6b7280] mb-4">Support</p>
             <ul className="space-y-2.5">
               {SUPPORT_LINKS.map((link) => (
@@ -132,11 +143,16 @@ export default function Footer({ categories, settings }: Props) {
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-[#e5e7eb] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={inView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.6, delay: 0.45 }}
+          className="border-t border-[#e5e7eb] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4"
+        >
           <p className="text-[10px] text-[#9ca3af] tracking-wide">
             © {new Date().getFullYear()} {storeName}. All rights reserved.
           </p>
@@ -162,7 +178,7 @@ export default function Footer({ categories, settings }: Props) {
             <Link href="/terms" className="text-[10px] text-[#9ca3af] hover:text-[#111111] transition-colors">Terms</Link>
             <Link href="/shipping" className="text-[10px] text-[#9ca3af] hover:text-[#111111] transition-colors">Shipping</Link>
           </div>
-        </div>
+        </motion.div>
       </div>
     </footer>
   );

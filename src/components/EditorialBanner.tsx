@@ -2,90 +2,64 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
 
 const EDITORIAL_IMAGE =
   "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1800&q=85";
 
-type Props = {
-  imageUrl?: string;
-  title?: string;
-  subtitle?: string;
-  linkUrl?: string;
-};
+type Props = { imageUrl?: string; title?: string; subtitle?: string; linkUrl?: string };
 
 export default function EditorialBanner({
   imageUrl = EDITORIAL_IMAGE,
-  title = "Curated for the Season",
+  title    = "Curated for the Season",
   subtitle = "Timeless silhouettes. Effortless style. Discover our editors' picks for the modern wardrobe.",
-  linkUrl = "/",
+  linkUrl  = "/",
 }: Props) {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const textRef    = useRef<HTMLDivElement>(null);
+  const inView     = useInView(textRef, { once: true, margin: "-100px" });
+
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start end", "end start"] });
+  const imgY = useTransform(scrollYProgress, [0, 1], [-60, 60]); // parallax range
+
+  const stagger = (i: number) => ({
+    initial: { opacity: 0, x: -28 },
+    animate: inView ? { opacity: 1, x: 0 } : {},
+    transition: { duration: 0.7, delay: i * 0.14, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+  });
+
   return (
-    <section className="relative h-[75vh] min-h-[520px] overflow-hidden my-6">
-      <motion.div
-        className="absolute inset-0"
-        initial={{ scale: 1.05 }}
-        whileInView={{ scale: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 1.4, ease: "easeOut" }}
-      >
-        <Image
-          src={imageUrl}
-          alt="Editorial"
-          fill
-          className="object-cover object-top"
-        />
+    <section ref={sectionRef} className="relative h-[78vh] min-h-[540px] overflow-hidden my-8">
+      {/* Parallax image */}
+      <motion.div className="absolute inset-[-10%]" style={{ y: imgY }}>
+        <Image src={imageUrl} alt="Editorial" fill className="object-cover object-center" />
       </motion.div>
 
-      {/* Dark overlay on left for text */}
-      <div
-        className="absolute inset-0"
-        style={{ background: "linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)" }}
+      {/* Left-side overlay */}
+      <div className="absolute inset-0"
+        style={{ background: "linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 45%, transparent 100%)" }}
       />
 
-      <div className="relative z-10 flex flex-col justify-center h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.p
-          className="text-[11px] tracking-[0.5em] uppercase font-medium text-white/70 mb-5"
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
+      {/* Text */}
+      <div ref={textRef} className="relative z-10 flex flex-col justify-center h-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+        <motion.p {...stagger(0)} className="text-[11px] tracking-[0.5em] uppercase font-medium text-white/60 mb-5">
           The Edit
         </motion.p>
-
-        <motion.h2
-          className="text-4xl sm:text-5xl lg:text-6xl text-white leading-tight max-w-xl mb-6"
-          initial={{ opacity: 0, x: -24 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.7, delay: 0.35 }}
-        >
+        <motion.h2 {...stagger(1)}
+          className="text-[clamp(40px,5.5vw,80px)] text-white leading-[0.96] max-w-lg mb-7">
           {title}
         </motion.h2>
-
-        <motion.p
-          className="text-white/75 text-base max-w-sm mb-10 leading-relaxed"
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-        >
+        <motion.p {...stagger(2)} className="text-white/70 text-base max-w-sm mb-10 leading-relaxed">
           {subtitle}
         </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.5, delay: 0.65 }}
-        >
-          <Link
-            href={linkUrl}
-            className="inline-block bg-white text-[#111111] text-xs tracking-[0.2em] uppercase font-semibold px-8 py-4 hover:bg-[#d2ff1f] transition-colors duration-300"
-          >
-            Explore the Edit
-          </Link>
+        <motion.div {...stagger(3)}>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Link href={linkUrl}
+              className="inline-block bg-white text-[#111111] text-[10px] tracking-[0.22em] uppercase font-semibold px-10 py-4 hover:bg-[#d2ff1f] transition-colors duration-300">
+              Explore the Edit
+            </Link>
+          </motion.div>
         </motion.div>
       </div>
     </section>

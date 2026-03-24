@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion, Variants } from "framer-motion";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 import { Category } from "@/lib/products";
 
 const FALLBACK_IMAGES = [
@@ -14,73 +15,71 @@ const FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=800&q=80",
 ];
 
-const containerVariants: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.1 } },
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 32 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: "easeOut" } },
-};
-
 type Props = { categories: Category[] };
 
 export default function FeaturedCategories({ categories }: Props) {
   const items = categories.length > 0 ? categories : [];
+  const headingRef = useRef<HTMLDivElement>(null);
+  const gridRef    = useRef<HTMLDivElement>(null);
+
+  const headingInView = useInView(headingRef, { once: true, margin: "-80px" });
+  const gridInView    = useInView(gridRef,    { once: true, margin: "-60px" });
+
   if (items.length === 0) return null;
 
   return (
-    <section id="categories" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <section id="categories" className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-28">
+      {/* Heading */}
       <motion.div
-        className="flex items-end justify-between mb-12"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.6 }}
+        ref={headingRef}
+        initial={{ opacity: 0, y: 40 }}
+        animate={headingInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="flex items-end justify-between mb-14"
       >
         <div>
-          <p className="text-[11px] tracking-[0.5em] uppercase font-medium text-[#6b7280] mb-2">Browse by</p>
-          <h2 className="text-3xl sm:text-4xl text-[#111111]">Categories</h2>
+          <p className="text-[11px] tracking-[0.5em] uppercase font-medium text-[#9ca3af] mb-3">Browse by</p>
+          <h2 className="text-[clamp(40px,5vw,64px)] text-[#111111]">Categories</h2>
         </div>
-        <Link href="/" className="text-sm font-medium text-[#6b7280] hover:text-[#111111] transition-colors hidden sm:block">
-          View all →
+        <Link href="/" className="nav-underline text-sm text-[#6b7280] hover:text-[#111111] transition-colors hidden sm:block pb-px">
+          View all
         </Link>
       </motion.div>
 
-      <motion.div
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.15 }}
-      >
+      {/* Grid */}
+      <div ref={gridRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-5">
         {items.map((cat, i) => (
-          <motion.div key={cat.id} variants={itemVariants}>
-            <Link href={`/?category=${cat.slug}`} className="group block relative overflow-hidden aspect-[3/4] bg-[#f3f4f6]">
+          <motion.div
+            key={cat.id}
+            initial={{ opacity: 0, y: 36 }}
+            animate={gridInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.65, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Link href={`/?category=${cat.slug}`} className="group block relative overflow-hidden aspect-[3/4] bg-[#f5f5f3]">
               <Image
                 src={FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]}
                 alt={cat.name}
                 fill
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.07]"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
               />
-              <div
-                className="absolute inset-0 transition-opacity duration-300"
-                style={{ background: "linear-gradient(transparent 40%, rgba(0,0,0,0.55) 100%)" }}
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-              <div className="absolute inset-0 flex flex-col justify-end p-5">
-                <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
-                  <p className="text-white font-medium text-sm sm:text-base mb-1">{cat.name}</p>
-                  <p className="text-[#d2ff1f] text-xs tracking-[0.5px] uppercase font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    Shop now →
+              {/* Dark overlay on hover */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-500" />
+
+              {/* Label — always visible, slides up on hover */}
+              <div className="absolute inset-x-0 bottom-0 p-5 flex flex-col justify-end">
+                <div
+                  className="transform translate-y-0 group-hover:-translate-y-2 transition-transform duration-500 ease-out"
+                >
+                  <p className="text-white text-base font-medium drop-shadow-sm">{cat.name}</p>
+                  <p className="text-[#d2ff1f] text-[11px] tracking-[0.3em] uppercase font-semibold mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-400 delay-75">
+                    Shop →
                   </p>
-                </motion.div>
+                </div>
               </div>
             </Link>
           </motion.div>
         ))}
-      </motion.div>
+      </div>
     </section>
   );
 }
