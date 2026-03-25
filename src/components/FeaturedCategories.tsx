@@ -28,20 +28,23 @@ export default function FeaturedCategories({ categories }: Props) {
   if (items.length === 0) return null;
 
   return (
-    <section id="categories" className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-28">
+    <section id="categories" className="bg-white max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-24">
       {/* Heading */}
       <motion.div
         ref={headingRef}
-        initial={{ opacity: 0, y: 40 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={headingInView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        className="flex items-end justify-between mb-14"
+        className="flex items-end justify-between mb-12"
       >
         <div>
           <p className="text-[11px] tracking-[0.5em] uppercase font-medium text-[#9ca3af] mb-3">Browse by</p>
-          <h2 className="text-[clamp(40px,5vw,64px)] text-[#111111]">Categories</h2>
+          <h2 className="text-[clamp(36px,5vw,60px)] text-[#111111]">Categories</h2>
         </div>
-        <Link href="/" className="nav-underline text-sm text-[#6b7280] hover:text-[#111111] transition-colors hidden sm:block pb-px">
+        <Link
+          href="/"
+          className="nav-underline text-sm text-[#6b7280] hover:text-[#111111] transition-colors hidden sm:block"
+        >
           View all
         </Link>
       </motion.div>
@@ -51,30 +54,32 @@ export default function FeaturedCategories({ categories }: Props) {
         {items.map((cat, i) => (
           <motion.div
             key={cat.id}
-            initial={{ opacity: 0, y: 36 }}
+            initial={{ opacity: 0, y: 28 }}
             animate={gridInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.65, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.6, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
           >
-            <Link href={`/?category=${cat.slug}`} className="group block relative overflow-hidden aspect-[3/4] bg-[#f5f5f3]">
-              <Image
-                src={FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]}
-                alt={cat.name}
-                fill
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
-              />
-              {/* Dark overlay on hover */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-500" />
+            <Link href={`/?category=${cat.slug}`} className="group block">
+              {/* Image card */}
+              <div className="relative overflow-hidden rounded-2xl aspect-[3/4] bg-[#f5f5f3] mb-3">
+                <Image
+                  src={FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]}
+                  alt={cat.name}
+                  fill
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+                />
+              </div>
 
-              {/* Label — always visible, slides up on hover */}
-              <div className="absolute inset-x-0 bottom-0 p-5 flex flex-col justify-end">
-                <div
-                  className="transform translate-y-0 group-hover:-translate-y-2 transition-transform duration-500 ease-out"
+              {/* Label below image */}
+              <div className="px-1 flex items-center justify-between">
+                <p className="text-[15px] text-[#111111] font-medium leading-snug group-hover:text-[#6b7280] transition-colors duration-200">
+                  {cat.name}
+                </p>
+                <svg
+                  className="w-4 h-4 text-[#9ca3af] group-hover:text-[#111111] group-hover:translate-x-0.5 transition-all duration-200"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
                 >
-                  <p className="text-white text-base font-medium drop-shadow-sm">{cat.name}</p>
-                  <p className="text-white/70 text-[11px] tracking-[0.3em] uppercase font-semibold mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-400 delay-75">
-                    Shop →
-                  </p>
-                </div>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </Link>
           </motion.div>

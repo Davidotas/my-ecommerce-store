@@ -8,6 +8,7 @@ import NewArrivalsGrid from "@/components/NewArrivalsGrid";
 import EditorialBanner from "@/components/EditorialBanner";
 import Newsletter from "@/components/Newsletter";
 import TrustStrip from "@/components/TrustStrip";
+import CollectionBanner from "@/components/CollectionBanner";
 import Footer from "@/components/Footer";
 import CategoryFilter from "@/components/CategoryFilter";
 import EditorialProductGrid from "@/components/EditorialProductGrid";
@@ -115,7 +116,10 @@ export default async function HomePage({
       {/* 4. New Arrivals (shown when not filtering) */}
       {!isFiltered && <NewArrivalsGrid products={newArrivals} />}
 
-      {/* 5. Editorial Banner */}
+      {/* 5. Collection split banners */}
+      {!isFiltered && <CollectionBanner products={newArrivals} />}
+
+      {/* 6. Editorial Banner */}
       {!isFiltered && <EditorialBanner />}
 
       {/* 6. All Products / Filtered Grid — editorial cream layout */}

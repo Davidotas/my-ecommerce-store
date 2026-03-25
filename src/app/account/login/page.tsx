@@ -14,14 +14,17 @@ export default function LoginPage() {
 }
 
 function LoginContent() {
-  const router = useRouter();
   const params = useSearchParams();
   const redirect = params.get("redirect") ?? "/account";
+  // Show error passed back from OAuth callback
+  const oauthError = params.get("error");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    oauthError === "oauth_failed" ? "Google sign-in failed. Please try again." : ""
+  );
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -34,8 +37,8 @@ function LoginContent() {
     if (authError) {
       setError(authError.message);
     } else {
-      router.push(redirect);
-      router.refresh();
+      // Full navigation so server components re-read the updated session cookie
+      window.location.href = redirect;
     }
   }
 
@@ -43,7 +46,7 @@ function LoginContent() {
     await supabaseBrowser.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=${redirect}`,
+        redirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(redirect)}`,
       },
     });
   }
