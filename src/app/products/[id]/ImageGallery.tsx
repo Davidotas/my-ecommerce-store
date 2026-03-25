@@ -5,9 +5,12 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ImageGallery({ images, name }: { images: string[]; name: string }) {
-  const [active, setActive] = useState(0);
-  const [direction, setDirection] = useState(0); // -1 left, +1 right
+  const [showAll, setShowAll] = useState(false);
+  const [lightbox, setLightbox] = useState<number | null>(null);
+
   const safe = images.length > 0 ? images : [];
+  const INITIAL_SHOW = 4;
+  const displayed = showAll ? safe : safe.slice(0, INITIAL_SHOW);
 
   if (safe.length === 0) {
     return (
@@ -17,132 +20,114 @@ export default function ImageGallery({ images, name }: { images: string[]; name:
     );
   }
 
-  function go(next: number) {
-    setDirection(next > active ? 1 : -1);
-    setActive(next);
-  }
-
-  function prev() { if (active > 0) go(active - 1); }
-  function next() { if (active < safe.length - 1) go(active + 1); }
-
-  const variants = {
-    enter: (d: number) => ({ x: d > 0 ? "100%" : "-100%", opacity: 0 }),
-    center: { x: 0, opacity: 1 },
-    exit: (d: number) => ({ x: d > 0 ? "-100%" : "100%", opacity: 0 }),
-  };
-
   return (
-    <div className="flex flex-col gap-3">
-      {/* Main image — horizontal slide gallery */}
-      <div
-        className="relative overflow-hidden bg-[#fafaf8] aspect-[3/4] cursor-grab active:cursor-grabbing"
-      >
-        <AnimatePresence initial={false} custom={direction} mode="popLayout">
-          <motion.div
-            key={active}
-            custom={direction}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.15}
-            onDragEnd={(_, info) => {
-              if (info.offset.x < -60) next();
-              else if (info.offset.x > 60) prev();
-            }}
-            className="absolute inset-0"
-          >
-            <Image
-              src={safe[active]}
-              alt={`${name} — view ${active + 1}`}
-              fill
-              priority={active === 0}
-              unoptimized
-              draggable={false}
-              className="object-cover select-none"
-            />
-          </motion.div>
-        </AnimatePresence>
+    <>
+      {/* Image grid — 2 columns like Reserved */}
+      <div className="space-y-1">
+        {/* First image: full width, prominent */}
+        <div
+          className="relative w-full aspect-[4/5] overflow-hidden bg-[#f5f5f3] cursor-zoom-in"
+          onClick={() => setLightbox(0)}
+        >
+          <Image
+            src={safe[0]}
+            alt={`${name} — view 1`}
+            fill
+            priority
+            unoptimized
+            className="object-cover hover:scale-[1.02] transition-transform duration-700"
+          />
+        </div>
 
-        {/* Left arrow */}
-        {active > 0 && (
-          <motion.button
-            onClick={prev}
-            initial={{ opacity: 0 }}
-            whileHover={{ opacity: 1 }}
-            animate={{ opacity: 0.7 }}
-            whileTap={{ scale: 0.9 }}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm"
-            aria-label="Previous image"
-          >
-            <svg className="w-4 h-4 text-[#111111]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </motion.button>
-        )}
-
-        {/* Right arrow */}
-        {active < safe.length - 1 && (
-          <motion.button
-            onClick={next}
-            initial={{ opacity: 0 }}
-            whileHover={{ opacity: 1 }}
-            animate={{ opacity: 0.7 }}
-            whileTap={{ scale: 0.9 }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm"
-            aria-label="Next image"
-          >
-            <svg className="w-4 h-4 text-[#111111]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </motion.button>
-        )}
-
-        {/* Image counter */}
-        {safe.length > 1 && (
-          <div className="absolute bottom-3 right-3 z-10 bg-black/50 text-white text-[10px] tracking-widest px-2.5 py-1">
-            {active + 1} / {safe.length}
+        {/* Remaining images: 2-column grid */}
+        {displayed.slice(1).length > 0 && (
+          <div className="grid grid-cols-2 gap-1">
+            {displayed.slice(1).map((img, i) => (
+              <div
+                key={i + 1}
+                className="relative aspect-[3/4] overflow-hidden bg-[#f5f5f3] cursor-zoom-in"
+                onClick={() => setLightbox(i + 1)}
+              >
+                <Image
+                  src={img}
+                  alt={`${name} — view ${i + 2}`}
+                  fill
+                  unoptimized
+                  className="object-cover hover:scale-[1.02] transition-transform duration-700"
+                />
+              </div>
+            ))}
           </div>
+        )}
+
+        {/* Show more button */}
+        {!showAll && safe.length > INITIAL_SHOW && (
+          <button
+            onClick={() => setShowAll(true)}
+            className="w-full py-4 border border-[#e5e7eb] text-sm text-[#111111] font-medium hover:border-[#111111] transition-colors flex items-center justify-center gap-2"
+          >
+            Show more
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
         )}
       </div>
 
-      {/* Dot indicators */}
-      {safe.length > 1 && (
-        <div className="flex items-center justify-center gap-1.5">
-          {safe.map((_, i) => (
-            <motion.button
-              key={i}
-              onClick={() => go(i)}
-              animate={{ width: i === active ? 20 : 6, opacity: i === active ? 1 : 0.35 }}
-              transition={{ duration: 0.25 }}
-              className="h-[3px] bg-[#111111] rounded-full"
-              aria-label={`View image ${i + 1}`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Thumbnail strip — scrollable */}
-      {safe.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {safe.map((img, i) => (
-            <motion.button
-              key={i}
-              onClick={() => go(i)}
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              className={`relative aspect-square w-14 shrink-0 overflow-hidden transition-all duration-200 ${
-                i === active ? "ring-1 ring-[#111111]" : "opacity-50 hover:opacity-80"
-              }`}
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightbox !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setLightbox(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              className="relative max-w-2xl w-full aspect-[3/4]"
+              onClick={(e) => e.stopPropagation()}
             >
-              <Image src={img} alt={`${name} ${i + 1}`} fill unoptimized className="object-cover" />
-            </motion.button>
-          ))}
-        </div>
-      )}
-    </div>
+              <Image src={safe[lightbox]} alt={name} fill unoptimized className="object-contain" />
+            </motion.div>
+
+            <button
+              onClick={() => setLightbox(null)}
+              className="absolute top-5 right-5 text-white/70 hover:text-white"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Prev/Next */}
+            {lightbox > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setLightbox(lightbox - 1); }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            )}
+            {lightbox < safe.length - 1 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setLightbox(lightbox + 1); }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
