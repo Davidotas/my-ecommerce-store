@@ -10,6 +10,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { CURRENCIES, CurrencyCode } from "@/lib/currency";
 import { Category, StoreSettings } from "@/lib/products";
 import AccountMenu from "./AccountMenu";
+import SearchOverlay from "./SearchOverlay";
 
 type Props = { categories: Category[]; settings: StoreSettings | null };
 
@@ -37,6 +38,7 @@ export default function Navbar({ categories, settings }: Props) {
   const [hoveredCat, setHoveredCat] = useState<number>(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const shopRef = useRef<HTMLDivElement>(null);
   const menuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -149,6 +151,18 @@ export default function Navbar({ categories, settings }: Props) {
               {/* Account */}
               <AccountMenu />
 
+              {/* Search */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                onClick={() => setSearchOpen(true)}
+                className="flex items-center justify-center w-9 h-9 text-[#6b7280] hover:text-[#111111] transition-colors duration-200"
+                aria-label="Search"
+              >
+                <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </motion.button>
+
               {/* Wishlist */}
               <motion.div whileHover={{ scale: 1.05 }}>
                 <Link href="/wishlist" className="relative flex items-center justify-center w-9 h-9 text-[#6b7280] hover:text-[#111111] transition-colors duration-200" aria-label="Wishlist">
@@ -256,6 +270,9 @@ export default function Navbar({ categories, settings }: Props) {
         )}
       </AnimatePresence>
 
+      {/* Search overlay */}
+      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+
       {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
@@ -263,6 +280,16 @@ export default function Navbar({ categories, settings }: Props) {
             transition={{ duration: 0.25 }}
             className="fixed inset-0 z-40 bg-white pt-[68px] flex flex-col">
             <div className="flex-1 overflow-y-auto px-6 py-8">
+              {/* Mobile search bar */}
+              <button
+                onClick={() => { setMobileOpen(false); setSearchOpen(true); }}
+                className="flex items-center gap-3 w-full border border-[#e8e8e5] px-4 py-3 text-sm text-[#9ca3af] mb-6 hover:border-[#111111] transition-colors"
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Search products…
+              </button>
               <p className="text-[9px] tracking-[0.4em] uppercase text-[#9ca3af] mb-5">Menu</p>
               <ul>
                 {[
