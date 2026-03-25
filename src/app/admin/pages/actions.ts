@@ -1,7 +1,50 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
+import { supabase, createAdminClient } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
+import type { Section } from "@/lib/builder-types";
+
+// ── Builder Pages ─────────────────────────────────────────────────────────────
+
+export async function createPage(title: string, slug: string) {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("builder_pages")
+    .insert({ title, slug, status: "draft", sections: [] })
+    .select("id, title, slug, status, updated_at")
+    .single();
+  if (error) return { error: error.message };
+  revalidatePath("/admin/pages");
+  return data;
+}
+
+export async function deletePage(id: string) {
+  const admin = createAdminClient();
+  await admin.from("builder_pages").delete().eq("id", id);
+  revalidatePath("/admin/pages");
+}
+
+export async function savePage(
+  id: string,
+  sections: Section[],
+  status: string,
+  title: string,
+  slug: string,
+  seoDescription: string,
+) {
+  const admin = createAdminClient();
+  await admin.from("builder_pages").update({
+    sections: sections as unknown as Record<string, unknown>[],
+    status,
+    title,
+    slug,
+    seo_description: seoDescription,
+    updated_at: new Date().toISOString(),
+  }).eq("id", id);
+  revalidatePath("/admin/pages");
+  revalidatePath(`/p/${slug}`);
+  if (slug === "home") revalidatePath("/");
+}
 
 // ── Marquee ─────────────────────────────────────────────────────────────────
 

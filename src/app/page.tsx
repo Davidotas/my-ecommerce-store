@@ -10,6 +10,8 @@ import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
 import CategoryFilter from "@/components/CategoryFilter";
 import EditorialProductGrid from "@/components/EditorialProductGrid";
+import SectionRenderer from "@/components/sections/SectionRenderer";
+import type { Section } from "@/lib/builder-types";
 export const revalidate = 60;
 
 export default async function HomePage({
@@ -19,10 +21,15 @@ export default async function HomePage({
 }) {
   const { category: categorySlug } = await searchParams;
 
-  const [{ data: allCategories }, { data: settingsData }] = await Promise.all([
+  const [{ data: allCategories }, { data: settingsData }, { data: builderHome }] = await Promise.all([
     supabase.from("categories").select("*").order("name"),
     supabase.from("store_settings").select("*").maybeSingle(),
+    supabase.from("builder_pages").select("sections").eq("slug", "home").eq("status", "published").maybeSingle(),
   ]);
+
+  // If the home page has been built with sections, render those instead
+  const builderSections = (builderHome?.sections ?? []) as Section[];
+  const useBuilder = builderSections.length > 0;
 
   let marqueeData: { text: string }[] | null = null;
   try {
@@ -67,6 +74,27 @@ export default async function HomePage({
   const newArrivals = (newArrivalsRaw ?? []).map((p) => fromDb(p as DbProduct));
 
   const isFiltered = !!categorySlug;
+
+  // If builder home has sections, render them dynamically
+  if (useBuilder) {
+    // Fetch products for builder sections that need them
+    const needsProducts = builderSections.some(
+      s => s.visible && ["product_grid", "featured_product"].includes(s.type)
+    );
+    let builderProducts = products;
+    if (needsProducts && !builderProducts.length) {
+      const { data } = await supabase.from("products").select("*, categories(id, name, slug)").order("created_at", { ascending: false });
+      builderProducts = (data ?? []).map(p => fromDb(p as DbProduct));
+    }
+    return (
+      <div className="bg-white">
+        {builderSections.map(section => (
+          <SectionRenderer key={section.id} section={section} products={builderProducts} categories={categories} />
+        ))}
+        <Footer categories={categories} settings={settings} />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white">
