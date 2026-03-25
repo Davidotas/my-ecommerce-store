@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export default function RegisterPage() {
@@ -14,7 +14,6 @@ export default function RegisterPage() {
 }
 
 function RegisterContent() {
-  const router = useRouter();
   const params = useSearchParams();
   const redirect = params.get("redirect") ?? "/account";
 
@@ -31,18 +30,21 @@ function RegisterContent() {
     setLoading(true);
     setError("");
 
-    const { error: authError } = await supabaseBrowser.auth.signUp({
+    const { data, error: authError } = await supabaseBrowser.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=${redirect}`,
+        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(redirect)}`,
       },
     });
 
     setLoading(false);
     if (authError) {
       setError(authError.message);
+    } else if (data.session) {
+      // Email confirmation disabled — session is live immediately
+      window.location.href = redirect;
     } else {
       setSuccess(true);
     }
@@ -52,7 +54,7 @@ function RegisterContent() {
     await supabaseBrowser.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=${redirect}`,
+        redirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(redirect)}`,
       },
     });
   }
