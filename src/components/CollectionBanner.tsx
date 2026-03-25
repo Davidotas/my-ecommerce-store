@@ -12,19 +12,19 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 
 const COLLECTIONS = [
   {
-    label: "Best for Women",
-    title: "WOMEN'S\nCOLLECTION",
+    label: "For the Kitchen",
+    title: "KITCHEN\nCOLLECTION",
     href: "/",
-    buttonText: "Shop Women",
-    image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1400&q=85",
+    buttonText: "Shop Kitchen",
+    image: "https://images.unsplash.com/photo-1544457070-4cd773b4d71e?w=1400&q=85",
     imageLeft: true,
   },
   {
-    label: "Best for Men",
-    title: "MEN'S\nCOLLECTION",
+    label: "For the Home",
+    title: "WALL ART &\nSCULPTURES",
     href: "/",
-    buttonText: "Shop Men",
-    image: "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=1400&q=85",
+    buttonText: "Shop Wall Art",
+    image: "https://images.unsplash.com/photo-1585412727339-54e4bae3bbf9?w=1400&q=85",
     imageLeft: false,
   },
 ];

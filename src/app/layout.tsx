@@ -9,8 +9,8 @@ const ojuju = Ojuju({ variable: "--font-ojuju", subsets: ["latin"] });
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "MYSTORE",
-  description: "Curated pieces for the modern wardrobe.",
+  title: "MyKolo Mysibi Collection",
+  description: "Handcrafted wood art and home pieces made from reclaimed materials. Wood spoons, plates, wall art, key holders, and more.",
 };
 
 export const revalidate = 60;

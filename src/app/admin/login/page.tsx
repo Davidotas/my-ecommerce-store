@@ -1,4 +1,5 @@
 import { login } from "./actions";
+import PasswordInput from "./PasswordInput";
 
 export default async function LoginPage({
   searchParams,
@@ -12,7 +13,7 @@ export default async function LoginPage({
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/mykolo-logo.png" alt="Mykolo" style={{ height: "40px", width: "auto" }} className="brightness-0 invert" />
+          <img src="/mykolo-logo.png" alt="MyKolo Mysibi" style={{ height: "48px", width: "auto" }} />
         </div>
         <p className="text-xs tracking-[0.3em] uppercase text-white/20 text-center mb-3">
           Admin
@@ -22,13 +23,7 @@ export default async function LoginPage({
         </h1>
 
         <form action={login} className="space-y-4">
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            autoFocus
-            className="w-full bg-transparent border border-white/10 text-white text-sm px-4 py-3.5 placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-colors"
-          />
+          <PasswordInput />
           {error && (
             <p className="text-xs text-red-400/70 tracking-wide">{error}</p>
           )}

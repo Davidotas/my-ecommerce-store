@@ -8,23 +8,23 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 const FEATURES = [
   {
     number: "01",
-    title: "Curated Quality",
-    body: "Every piece in our collection is hand-selected for craftsmanship, material, and lasting style.",
+    title: "Reclaimed Wood Only",
+    body: "Every piece is crafted from responsibly sourced reclaimed wood — giving new life to materials that would otherwise go to waste.",
   },
   {
     number: "02",
-    title: "Worldwide Delivery",
-    body: "Fast, tracked shipping to over 120 countries. Free returns within 30 days — no questions asked.",
+    title: "Handcrafted by Artisans",
+    body: "Our skilled craftspeople shape, sand, and finish each item entirely by hand. No mass production — ever.",
   },
   {
     number: "03",
-    title: "Exclusive Drops",
-    body: "New arrivals weekly. Inner Circle members get early access to limited-edition collections.",
+    title: "Every Piece is Unique",
+    body: "Natural wood grain means no two items are identical. You receive a truly one-of-a-kind work of art.",
   },
   {
     number: "04",
-    title: "Sustainably Made",
-    body: "We partner with ethical manufacturers committed to fair wages and eco-conscious production.",
+    title: "Bespoke Orders Welcome",
+    body: "Want something custom? We take bespoke orders for personalised gifts, home décor, and gallery pieces.",
   },
 ];
 
@@ -43,10 +43,10 @@ export default function TrustStrip() {
           className="mb-20"
         >
           <p className="text-[11px] tracking-[0.55em] uppercase font-medium text-[#9ca3af] mb-4">
-            Why Mykolo
+            Why MyKolo
           </p>
           <h2 className="text-[clamp(36px,4.5vw,60px)] text-[#111111] max-w-md" style={{ letterSpacing: "-0.03em" }}>
-            Fashion, elevated.
+            Crafted with purpose.
           </h2>
         </motion.div>
 

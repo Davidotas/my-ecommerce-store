@@ -29,9 +29,9 @@ export default function ContactPage() {
 
             <div className="space-y-8">
               {[
-                { label: "Email", value: "hello@mystore.com", icon: "✉️" },
-                { label: "Phone", value: "+1 (555) 000-0000", icon: "📞" },
-                { label: "Hours", value: "Mon–Fri, 9am–6pm GMT", icon: "🕐" },
+                { label: "Email", value: "hello@mykolomy sibi.com", icon: "✉️" },
+                { label: "Phone", value: "+234 (0) 800 000 0000", icon: "📞" },
+                { label: "Hours", value: "Mon–Fri, 9am–6pm WAT", icon: "🕐" },
                 { label: "Response time", value: "Within 24 hours", icon: "⚡" },
               ].map((item) => (
                 <div key={item.label} className="flex items-start gap-4">
@@ -49,7 +49,7 @@ export default function ContactPage() {
           <div>
             {submitted ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-16">
-                <div className="w-16 h-16 bg-[#d2ff1f] rounded-full flex items-center justify-center mb-6 text-2xl">✓</div>
+                <div className="w-16 h-16 bg-[#111111] rounded-full flex items-center justify-center mb-6 text-2xl text-white">✓</div>
                 <h2 className="text-2xl text-[#111111] mb-2">Message sent!</h2>
                 <p className="text-[#6b7280] text-sm">We&apos;ll get back to you within 24 hours.</p>
               </div>
@@ -89,7 +89,9 @@ export default function ContactPage() {
                     <option value="">Select a topic</option>
                     <option value="order">Order inquiry</option>
                     <option value="product">Product question</option>
+                    <option value="bespoke">Bespoke / custom order</option>
                     <option value="return">Returns & exchanges</option>
+                    <option value="wholesale">Wholesale enquiry</option>
                     <option value="other">Other</option>
                   </select>
                 </div>

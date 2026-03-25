@@ -32,8 +32,8 @@ export default function Hero({ settings }: { settings: StoreSettings | null }) {
   const imgY = useTransform(scrollY, [0, 700], [0, 140]);
 
   const heroImage  = FALLBACK_IMAGE;
-  const title      = settings?.hero_title      || "New Season Arrivals";
-  const subtitle   = settings?.hero_subtitle   || "Discover curated pieces for the modern wardrobe.";
+  const title      = settings?.hero_title      || "Handcrafted Wood Art";
+  const subtitle   = settings?.hero_subtitle   || "Timeless pieces crafted from reclaimed wood. Every item is unique.";
   const buttonText = settings?.hero_button_text || "Shop Now";
   const buttonLink = settings?.hero_button_link || "/#products";
 
@@ -70,7 +70,7 @@ export default function Hero({ settings }: { settings: StoreSettings | null }) {
           animate="visible"
           className="text-[11px] tracking-[0.7em] uppercase font-medium text-white/50 mb-8"
         >
-          Collection 2026
+          Reclaimed Wood Collection
         </motion.p>
 
         {/* Word-by-word animated headline */}

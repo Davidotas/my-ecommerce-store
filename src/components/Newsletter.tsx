@@ -25,7 +25,7 @@ export default function Newsletter() {
           transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
           className="text-[11px] tracking-[0.6em] uppercase font-medium text-white/40 mb-6"
         >
-          Stay in the loop
+          Join the Workshop
         </motion.p>
 
         <motion.h2
@@ -44,7 +44,7 @@ export default function Newsletter() {
           transition={{ duration: 0.7, delay: 0.35, ease: EASE }}
           className="text-white/40 text-base mb-14 leading-relaxed max-w-sm mx-auto"
         >
-          Be the first to know about new drops, exclusive offers, and curated edits.
+          Be the first to know about new pieces, bespoke offers, and workshop releases.
         </motion.p>
 
         <motion.div

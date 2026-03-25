@@ -6,14 +6,14 @@ import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 
 const EDITORIAL_IMAGE =
-  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1800&q=85";
+  "https://images.unsplash.com/photo-1544457070-4cd773b4d71e?w=1800&q=85";
 
 type Props = { imageUrl?: string; title?: string; subtitle?: string; linkUrl?: string };
 
 export default function EditorialBanner({
   imageUrl = EDITORIAL_IMAGE,
-  title    = "Curated for the Season",
-  subtitle = "Timeless silhouettes. Effortless style. Discover our editors' picks for the modern wardrobe.",
+  title    = "Crafted for Your Home",
+  subtitle = "From the workshop to your walls. Discover handcrafted wood art, kitchen pieces, and gallery-worthy sculptures.",
   linkUrl  = "/",
 }: Props) {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -44,7 +44,7 @@ export default function EditorialBanner({
       {/* Text */}
       <div ref={textRef} className="relative z-10 flex flex-col justify-center h-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
         <motion.p {...stagger(0)} className="text-[11px] tracking-[0.5em] uppercase font-medium text-white/60 mb-5">
-          The Edit
+          The Workshop
         </motion.p>
         <motion.h2 {...stagger(1)}
           className="text-[clamp(40px,5.5vw,80px)] text-white leading-[0.96] max-w-lg mb-7">
@@ -57,7 +57,7 @@ export default function EditorialBanner({
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Link href={linkUrl}
               className="inline-block bg-white text-[#111111] text-[10px] tracking-[0.22em] uppercase font-semibold px-10 py-4 hover:bg-white/85 transition-colors duration-300">
-              Explore the Edit
+              Explore the Collection
             </Link>
           </motion.div>
         </motion.div>

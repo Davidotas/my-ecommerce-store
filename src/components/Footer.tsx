@@ -82,7 +82,7 @@ export default function Footer({ categories, settings }: Props) {
               className="mb-4"
             />
             <p className="text-[#6b7280] text-xs leading-relaxed mb-6 max-w-[180px]">
-              Curated pieces for the modern wardrobe. Timeless style, delivered worldwide.
+              Handcrafted wood art from reclaimed materials. Unique pieces for your home, delivered worldwide.
             </p>
             <div className="flex items-center gap-3">
               {SOCIALS.map((s) => (
