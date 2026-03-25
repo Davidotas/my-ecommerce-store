@@ -71,7 +71,7 @@ export default function FeaturedCategories({ categories }: Props) {
                   className="transform translate-y-0 group-hover:-translate-y-2 transition-transform duration-500 ease-out"
                 >
                   <p className="text-white text-base font-medium drop-shadow-sm">{cat.name}</p>
-                  <p className="text-[#d2ff1f] text-[11px] tracking-[0.3em] uppercase font-semibold mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-400 delay-75">
+                  <p className="text-white/70 text-[11px] tracking-[0.3em] uppercase font-semibold mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-400 delay-75">
                     Shop →
                   </p>
                 </div>

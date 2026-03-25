@@ -7,6 +7,7 @@ import FeaturedCategories from "@/components/FeaturedCategories";
 import NewArrivalsGrid from "@/components/NewArrivalsGrid";
 import EditorialBanner from "@/components/EditorialBanner";
 import Newsletter from "@/components/Newsletter";
+import TrustStrip from "@/components/TrustStrip";
 import Footer from "@/components/Footer";
 import CategoryFilter from "@/components/CategoryFilter";
 import EditorialProductGrid from "@/components/EditorialProductGrid";
@@ -152,7 +153,10 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* 7. Newsletter */}
+      {/* 7. Trust strip */}
+      {!isFiltered && <TrustStrip />}
+
+      {/* 8. Newsletter */}
       <Newsletter />
 
       {/* 8. Footer */}

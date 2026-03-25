@@ -56,7 +56,7 @@ export default function EditorialBanner({
         <motion.div {...stagger(3)}>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Link href={linkUrl}
-              className="inline-block bg-white text-[#111111] text-[10px] tracking-[0.22em] uppercase font-semibold px-10 py-4 hover:bg-[#d2ff1f] transition-colors duration-300">
+              className="inline-block bg-white text-[#111111] text-[10px] tracking-[0.22em] uppercase font-semibold px-10 py-4 hover:bg-white/85 transition-colors duration-300">
               Explore the Edit
             </Link>
           </motion.div>

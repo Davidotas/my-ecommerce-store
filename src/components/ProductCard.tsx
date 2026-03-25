@@ -62,7 +62,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <div className="absolute bottom-0 left-0 right-0 z-10 translate-y-full group-hover:translate-y-0 transition-transform duration-[380ms] ease-out">
           <button
             onClick={(e) => { e.preventDefault(); addItem(product); }}
-            className="w-full bg-[#111111] text-white text-[10px] tracking-[0.22em] uppercase font-semibold py-4 hover:bg-[#d2ff1f] hover:text-[#111111] transition-colors duration-300"
+            className="w-full bg-[#111111] text-white text-[10px] tracking-[0.22em] uppercase font-semibold py-4 hover:bg-[#2a2a2a] transition-colors duration-300"
           >
             Quick Add
           </button>
