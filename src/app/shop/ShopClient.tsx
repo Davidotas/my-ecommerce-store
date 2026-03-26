@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { Product, Category } from "@/lib/products";
-import ProductCard from "@/components/ProductCard";
+import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
+import { useCurrency } from "@/context/CurrencyContext";
+import { formatCurrency } from "@/lib/currency";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -26,6 +31,140 @@ type Props = {
   activeInStock: boolean;
 };
 
+// ── Apple-style product card ──────────────────────────────────────────────────
+function AppleProductCard({ product, index }: { product: Product; index: number }) {
+  const { addItem } = useCart();
+  const { toggle, has } = useWishlist();
+  const { currency } = useCurrency();
+  const wished = has(product.id);
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-40px" });
+
+  const isNew = product.createdAt
+    ? Date.now() - new Date(product.createdAt).getTime() < ONE_WEEK_MS
+    : false;
+  const hasDiscount =
+    product.compareAtPrice != null && product.compareAtPrice > product.price;
+  const discount = hasDiscount
+    ? Math.round((1 - product.price / product.compareAtPrice!) * 100)
+    : null;
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, scale: 0.97, y: 20 }}
+      animate={inView ? { opacity: 1, scale: 1, y: 0 } : {}}
+      transition={{ duration: 0.55, delay: Math.min(index * 0.05, 0.35), ease: EASE }}
+    >
+      <Link
+        href={`/products/${product.id}`}
+        className="group block bg-[#f5f5f7] rounded-[18px] overflow-hidden hover:bg-[#ebebed] transition-colors duration-400"
+      >
+        {/* Image area */}
+        <div className="relative aspect-square bg-[#f9f9f7] overflow-hidden">
+          {/* Badges */}
+          <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
+            {isNew && !hasDiscount && (
+              <span className="bg-[#1d1d1f] text-white text-[9px] font-bold tracking-widest px-2.5 py-1 rounded-full">
+                NEW
+              </span>
+            )}
+            {discount && (
+              <span className="bg-[#ff3b30] text-white text-[9px] font-bold px-2.5 py-1 rounded-full">
+                -{discount}%
+              </span>
+            )}
+          </div>
+
+          {/* Wishlist */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggle(product);
+            }}
+            className={`absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+              wished
+                ? "bg-[#1d1d1f] text-white opacity-100"
+                : "bg-white/80 text-[#6e6e73] opacity-0 group-hover:opacity-100"
+            }`}
+            aria-label="Toggle wishlist"
+          >
+            <svg
+              className="w-4 h-4"
+              fill={wished ? "currentColor" : "none"}
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+          </button>
+
+          {/* Product image */}
+          {product.image ? (
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              unoptimized
+              className="object-contain p-8 transition-transform duration-500 group-hover:scale-[1.05]"
+            />
+          ) : (
+            <div className="absolute inset-8 bg-[#e8e8e6] rounded-2xl" />
+          )}
+
+          {/* Quick Add */}
+          {product.stock > 0 && (
+            <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  addItem(product);
+                }}
+                className="w-full bg-[#1d1d1f] text-white text-[11px] tracking-[0.18em] uppercase font-semibold py-3.5 hover:bg-[#3d3d3d] transition-colors"
+              >
+                Quick Add
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="px-5 pb-5 pt-4">
+          {product.category && (
+            <p className="text-[10px] tracking-[0.2em] uppercase text-[#6e6e73] mb-1">
+              {product.category}
+            </p>
+          )}
+          <h3
+            className="text-[#1d1d1f] font-semibold mb-1.5 leading-snug"
+            style={{ fontSize: "15px", letterSpacing: "-0.2px" }}
+          >
+            {product.name}
+          </h3>
+          <div className="flex items-center gap-2">
+            <span className="text-[15px] text-[#1d1d1f] font-medium">
+              {formatCurrency(product.price, currency)}
+            </span>
+            {hasDiscount && (
+              <span className="text-[13px] text-[#6e6e73] line-through">
+                {formatCurrency(product.compareAtPrice!, currency)}
+              </span>
+            )}
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
+
+// ── Main ShopClient ───────────────────────────────────────────────────────────
 export default function ShopClient({
   products,
   categories,
@@ -36,7 +175,7 @@ export default function ShopClient({
   activeInStock,
 }: Props) {
   const router = useRouter();
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
   const [minInput, setMinInput] = useState(
     activeMin ? String(activeMin / 100) : ""
   );
@@ -44,11 +183,8 @@ export default function ShopClient({
     activeMax ? String(activeMax / 100) : ""
   );
 
-  const filterCount =
-    activeCategories.length +
-    (activeMin ? 1 : 0) +
-    (activeMax ? 1 : 0) +
-    (activeInStock ? 1 : 0);
+  const extraFilterCount =
+    (activeMin ? 1 : 0) + (activeMax ? 1 : 0) + (activeInStock ? 1 : 0);
 
   function buildParams(overrides: Record<string, string | undefined>) {
     const p = new URLSearchParams();
@@ -78,410 +214,237 @@ export default function ShopClient({
     router.push(`/shop?${p.toString()}`);
   }
 
-  function applyPrice() {
-    const minCents = minInput ? Math.round(parseFloat(minInput) * 100) : undefined;
-    const maxCents = maxInput ? Math.round(parseFloat(maxInput) * 100) : undefined;
-    const p = new URLSearchParams();
-    if (activeCategories.length > 0) p.set("categories", activeCategories.join(","));
-    if (activeSort) p.set("sort", activeSort);
-    if (minCents) p.set("min", String(minCents));
-    if (maxCents) p.set("max", String(maxCents));
-    if (activeInStock) p.set("inStock", "true");
-    router.push(`/shop?${p.toString()}`);
-  }
-
   function clearAll() {
     setMinInput("");
     setMaxInput("");
     router.push("/shop");
   }
 
-  const sidebar = (
-    <ShopSidebar
-      categories={categories}
-      activeCategories={activeCategories}
-      activeSort={activeSort}
-      activeInStock={activeInStock}
-      minInput={minInput}
-      maxInput={maxInput}
-      filterCount={filterCount}
-      onMinInput={setMinInput}
-      onMaxInput={setMaxInput}
-      onSort={(v) =>
-        router.push(`/shop?${buildParams({ sort: v || undefined })}`)
-      }
-      onToggleCategory={toggleCategory}
-      onToggleInStock={() =>
-        router.push(
-          `/shop?${buildParams({ inStock: activeInStock ? undefined : "true" })}`
-        )
-      }
-      onApplyPrice={applyPrice}
-      onClearAll={clearAll}
-    />
-  );
+  function applyMoreFilters() {
+    const minCents = minInput ? Math.round(parseFloat(minInput) * 100) : undefined;
+    const maxCents = maxInput ? Math.round(parseFloat(maxInput) * 100) : undefined;
+    const p = new URLSearchParams();
+    if (activeCategories.length > 0)
+      p.set("categories", activeCategories.join(","));
+    if (activeSort) p.set("sort", activeSort);
+    if (minCents) p.set("min", String(minCents));
+    if (maxCents) p.set("max", String(maxCents));
+    if (activeInStock) p.set("inStock", "true");
+    router.push(`/shop?${p.toString()}`);
+    setMoreFiltersOpen(false);
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Page header */}
-      <div className="mb-10">
-        <p className="text-[11px] tracking-[0.5em] uppercase text-[#9ca3af] mb-2">
-          Explore our collection
+    <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-14">
+
+      {/* Page heading */}
+      <div className="text-center mb-10">
+        <h1
+          className="text-[#1d1d1f] font-bold tracking-tight mb-2"
+          style={{ fontSize: "clamp(32px, 5vw, 56px)", letterSpacing: "-0.5px" }}
+        >
+          All Products
+        </h1>
+        <p className="text-[#6e6e73] text-[17px]">
+          {products.length} {products.length === 1 ? "product" : "products"}
         </p>
-        <div className="flex items-end justify-between flex-wrap gap-4">
-          <h1 className="text-[clamp(32px,5vw,56px)] tracking-tight text-[#111111] font-light">
-            Shop
-          </h1>
-          <p className="text-sm text-[#9ca3af]">
-            {products.length} {products.length === 1 ? "product" : "products"}
-          </p>
-        </div>
       </div>
 
-      <div className="flex gap-10 items-start">
-        {/* Desktop sidebar */}
-        <aside className="hidden lg:block w-56 shrink-0 sticky top-[88px]">
-          {sidebar}
-        </aside>
+      {/* ── Filter bar ── */}
+      <div className="flex items-center gap-3 flex-wrap mb-10">
 
-        <div className="flex-1 min-w-0">
-          {/* Mobile top bar */}
-          <div className="flex items-center justify-between mb-6 gap-4 lg:hidden">
+        {/* Category pills */}
+        <div className="flex items-center gap-2 flex-wrap flex-1">
+          {/* All */}
+          <button
+            onClick={clearAll}
+            className={`text-[13px] font-medium px-4 py-2 rounded-full border transition-all duration-200 ${
+              activeCategories.length === 0 && !activeMin && !activeMax && !activeInStock
+                ? "bg-[#1d1d1f] text-white border-[#1d1d1f]"
+                : "bg-transparent text-[#1d1d1f] border-[#d2d2d7] hover:border-[#1d1d1f]"
+            }`}
+          >
+            All
+          </button>
+
+          {categories.map((cat) => {
+            const active = activeCategories.includes(cat.slug);
+            return (
+              <button
+                key={cat.id}
+                onClick={() => toggleCategory(cat.slug)}
+                className={`text-[13px] font-medium px-4 py-2 rounded-full border transition-all duration-200 ${
+                  active
+                    ? "bg-[#1d1d1f] text-white border-[#1d1d1f]"
+                    : "bg-transparent text-[#1d1d1f] border-[#d2d2d7] hover:border-[#1d1d1f]"
+                }`}
+              >
+                {cat.name}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right side: Sort + More Filters */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Sort */}
+          <select
+            value={activeSort ?? ""}
+            onChange={(e) =>
+              router.push(
+                `/shop?${buildParams({ sort: e.target.value || undefined })}`
+              )
+            }
+            className="text-[13px] font-medium px-4 py-2 rounded-full border border-[#d2d2d7] text-[#1d1d1f] bg-white focus:outline-none focus:border-[#1d1d1f] appearance-none cursor-pointer pr-8"
+            style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231d1d1f' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+
+          {/* More Filters */}
+          <div className="relative">
             <button
-              onClick={() => setFiltersOpen(true)}
-              className="flex items-center gap-2 border border-[#e5e7eb] text-sm text-[#111111] px-4 py-2 hover:border-[#111111] transition-colors"
+              onClick={() => setMoreFiltersOpen((p) => !p)}
+              className={`flex items-center gap-2 text-[13px] font-medium px-4 py-2 rounded-full border transition-all duration-200 ${
+                extraFilterCount > 0
+                  ? "bg-[#1d1d1f] text-white border-[#1d1d1f]"
+                  : "bg-transparent text-[#1d1d1f] border-[#d2d2d7] hover:border-[#1d1d1f]"
+              }`}
             >
               <svg
-                className="w-4 h-4"
+                className="w-3.5 h-3.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
-                strokeWidth={1.5}
+                strokeWidth={2}
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"
+                  d="M3 4h18M7 12h10M11 20h2"
                 />
               </svg>
               Filters
-              {filterCount > 0 && (
-                <span className="bg-[#111111] text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-                  {filterCount}
+              {extraFilterCount > 0 && (
+                <span className="w-4 h-4 bg-white text-[#1d1d1f] text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {extraFilterCount}
                 </span>
               )}
             </button>
-            <select
-              value={activeSort ?? ""}
-              onChange={(e) =>
-                router.push(
-                  `/shop?${buildParams({ sort: e.target.value || undefined })}`
-                )
-              }
-              className="text-sm border border-[#e5e7eb] px-3 py-2 text-[#111111] bg-white focus:outline-none focus:border-[#111111]"
-            >
-              {SORT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
 
-          {/* Product grid */}
-          {products.length === 0 ? (
-            <div className="py-24 text-center">
-              <p className="text-[#111111] text-sm font-medium mb-2">
-                No products match your filters
-              </p>
-              <p className="text-[#9ca3af] text-xs mb-6">
-                Try adjusting or clearing your filters.
-              </p>
-              <button
-                onClick={clearAll}
-                className="text-xs text-[#111111] underline underline-offset-2"
-              >
-                Clear all filters
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-12">
-              {products.map((product, i) => {
-                const isNew =
-                  product.createdAt
-                    ? Date.now() - new Date(product.createdAt).getTime() <
-                      ONE_WEEK_MS
-                    : false;
-                return (
+            {/* More Filters dropdown */}
+            <AnimatePresence>
+              {moreFiltersOpen && (
+                <>
                   <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      duration: 0.5,
-                      delay: Math.min(i * 0.04, 0.32),
-                      ease: EASE,
-                    }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-30"
+                    onClick={() => setMoreFiltersOpen(false)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                    transition={{ duration: 0.18, ease: EASE }}
+                    className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl shadow-black/10 border border-black/[0.06] z-40 p-5"
                   >
-                    <ProductCard product={product} isNew={isNew} />
+                    <p className="text-[11px] tracking-[0.3em] uppercase font-semibold text-[#1d1d1f] mb-3">
+                      Price Range
+                    </p>
+                    <div className="flex items-center gap-2 mb-4">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Min"
+                        value={minInput}
+                        onChange={(e) => setMinInput(e.target.value)}
+                        className="w-full border border-[#d2d2d7] rounded-lg text-sm px-3 py-2 text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f] placeholder-[#b0b0b0]"
+                      />
+                      <span className="text-[#9ca3af] text-xs shrink-0">—</span>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Max"
+                        value={maxInput}
+                        onChange={(e) => setMaxInput(e.target.value)}
+                        className="w-full border border-[#d2d2d7] rounded-lg text-sm px-3 py-2 text-[#1d1d1f] focus:outline-none focus:border-[#1d1d1f] placeholder-[#b0b0b0]"
+                      />
+                    </div>
+
+                    <div className="border-t border-[#f3f4f6] pt-4 mb-4">
+                      <button
+                        onClick={() =>
+                          router.push(
+                            `/shop?${buildParams({
+                              inStock: activeInStock ? undefined : "true",
+                            })}`
+                          )
+                        }
+                        className="flex items-center justify-between w-full group"
+                      >
+                        <span className="text-[14px] text-[#1d1d1f] font-medium">
+                          In stock only
+                        </span>
+                        <span
+                          className={`relative inline-flex w-9 h-5 rounded-full transition-colors duration-200 ${
+                            activeInStock ? "bg-[#1d1d1f]" : "bg-[#e5e7eb]"
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
+                              activeInStock ? "translate-x-4" : "translate-x-0.5"
+                            }`}
+                          />
+                        </span>
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={applyMoreFilters}
+                      className="w-full bg-[#1d1d1f] text-white text-[13px] font-semibold py-2.5 rounded-full hover:bg-[#3d3d3d] transition-colors"
+                    >
+                      Apply
+                    </button>
                   </motion.div>
-                );
-              })}
-            </div>
-          )}
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
-      {/* Mobile filters drawer */}
-      <AnimatePresence>
-        {filtersOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/30"
-              onClick={() => setFiltersOpen(false)}
-            />
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ duration: 0.3, ease: EASE }}
-              className="fixed top-0 left-0 bottom-0 z-50 w-72 bg-white shadow-xl overflow-y-auto"
-            >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-[#f3f4f6]">
-                <span className="text-sm font-semibold text-[#111111]">
-                  Filters
-                  {filterCount > 0 && (
-                    <span className="ml-2 bg-[#111111] text-white text-[9px] font-bold w-4 h-4 inline-flex items-center justify-center rounded-full">
-                      {filterCount}
-                    </span>
-                  )}
-                </span>
-                <button onClick={() => setFiltersOpen(false)}>
-                  <svg
-                    className="w-5 h-5 text-[#6b7280]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-              <div className="p-5">{sidebar}</div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function ShopSidebar({
-  categories,
-  activeCategories,
-  activeSort,
-  activeInStock,
-  minInput,
-  maxInput,
-  filterCount,
-  onMinInput,
-  onMaxInput,
-  onSort,
-  onToggleCategory,
-  onToggleInStock,
-  onApplyPrice,
-  onClearAll,
-}: {
-  categories: Category[];
-  activeCategories: string[];
-  activeSort?: string;
-  activeInStock: boolean;
-  minInput: string;
-  maxInput: string;
-  filterCount: number;
-  onMinInput: (v: string) => void;
-  onMaxInput: (v: string) => void;
-  onSort: (v: string) => void;
-  onToggleCategory: (slug: string) => void;
-  onToggleInStock: () => void;
-  onApplyPrice: () => void;
-  onClearAll: () => void;
-}) {
-  return (
-    <div className="space-y-7">
-      {/* Clear all */}
-      {filterCount > 0 && (
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] tracking-[0.3em] uppercase font-semibold text-[#111111]">
-            Filters
-            <span className="ml-1.5 bg-[#111111] text-white text-[9px] font-bold w-4 h-4 inline-flex items-center justify-center rounded-full">
-              {filterCount}
-            </span>
-          </span>
-          <button
-            onClick={onClearAll}
-            className="text-[11px] text-[#9ca3af] hover:text-[#111111] transition-colors underline underline-offset-2"
+      {/* ── Product grid ── */}
+      {products.length === 0 ? (
+        <div className="py-24 text-center">
+          <p
+            className="text-[#1d1d1f] font-semibold mb-2"
+            style={{ fontSize: "19px" }}
           >
-            Clear all
+            No products match your filters
+          </p>
+          <p className="text-[#6e6e73] text-[15px] mb-6">
+            Try adjusting or clearing your filters.
+          </p>
+          <button
+            onClick={clearAll}
+            className="bg-[#1d1d1f] text-white text-[14px] font-medium px-6 py-2.5 rounded-full hover:bg-[#3d3d3d] transition-colors"
+          >
+            Clear all filters
           </button>
         </div>
-      )}
-
-      {/* Sort */}
-      <div>
-        <p className="text-[10px] tracking-[0.3em] uppercase font-semibold text-[#111111] mb-3">
-          Sort by
-        </p>
-        <ul className="space-y-2">
-          {SORT_OPTIONS.map((opt) => (
-            <li key={opt.value}>
-              <button
-                onClick={() => onSort(opt.value)}
-                className={`text-sm w-full text-left transition-colors ${
-                  (activeSort ?? "") === opt.value
-                    ? "text-[#111111] font-semibold"
-                    : "text-[#6b7280] hover:text-[#111111]"
-                }`}
-              >
-                {opt.label}
-              </button>
-            </li>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {products.map((product, i) => (
+            <AppleProductCard key={product.id} product={product} index={i} />
           ))}
-        </ul>
-      </div>
-
-      <div className="border-t border-[#f3f4f6]" />
-
-      {/* Categories */}
-      <div>
-        <p className="text-[10px] tracking-[0.3em] uppercase font-semibold text-[#111111] mb-3">
-          Category
-        </p>
-        <ul className="space-y-2.5">
-          {categories.map((cat) => {
-            const checked = activeCategories.includes(cat.slug);
-            return (
-              <li key={cat.id}>
-                <label className="flex items-center gap-2.5 cursor-pointer group">
-                  <span
-                    onClick={() => onToggleCategory(cat.slug)}
-                    className={`w-4 h-4 border flex items-center justify-center shrink-0 transition-colors ${
-                      checked
-                        ? "bg-[#111111] border-[#111111]"
-                        : "border-[#d1d5db] group-hover:border-[#111111]"
-                    }`}
-                  >
-                    {checked && (
-                      <svg
-                        className="w-2.5 h-2.5 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        strokeWidth={3}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    )}
-                  </span>
-                  <span
-                    onClick={() => onToggleCategory(cat.slug)}
-                    className={`text-sm transition-colors ${
-                      checked
-                        ? "text-[#111111] font-medium"
-                        : "text-[#6b7280] group-hover:text-[#111111]"
-                    }`}
-                  >
-                    {cat.name}
-                  </span>
-                </label>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-
-      <div className="border-t border-[#f3f4f6]" />
-
-      {/* Price range */}
-      <div>
-        <p className="text-[10px] tracking-[0.3em] uppercase font-semibold text-[#111111] mb-3">
-          Price range
-        </p>
-        <div className="flex items-center gap-2 mb-3">
-          <div className="flex-1">
-            <input
-              type="number"
-              min="0"
-              placeholder="Min"
-              value={minInput}
-              onChange={(e) => onMinInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && onApplyPrice()}
-              className="w-full border border-[#e5e7eb] text-sm px-2.5 py-1.5 text-[#111111] focus:outline-none focus:border-[#111111] placeholder-[#c0c0c0]"
-            />
-          </div>
-          <span className="text-[#9ca3af] text-xs">—</span>
-          <div className="flex-1">
-            <input
-              type="number"
-              min="0"
-              placeholder="Max"
-              value={maxInput}
-              onChange={(e) => onMaxInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && onApplyPrice()}
-              className="w-full border border-[#e5e7eb] text-sm px-2.5 py-1.5 text-[#111111] focus:outline-none focus:border-[#111111] placeholder-[#c0c0c0]"
-            />
-          </div>
         </div>
-        <button
-          onClick={onApplyPrice}
-          className="w-full border border-[#111111] text-[11px] tracking-[0.15em] uppercase font-semibold py-2 hover:bg-[#111111] hover:text-white transition-colors duration-200"
-        >
-          Apply
-        </button>
-      </div>
-
-      <div className="border-t border-[#f3f4f6]" />
-
-      {/* In stock toggle */}
-      <div>
-        <button
-          onClick={onToggleInStock}
-          className="flex items-center justify-between w-full group"
-        >
-          <span
-            className={`text-sm transition-colors ${
-              activeInStock
-                ? "text-[#111111] font-medium"
-                : "text-[#6b7280] group-hover:text-[#111111]"
-            }`}
-          >
-            In stock only
-          </span>
-          <span
-            className={`relative inline-flex w-9 h-5 rounded-full transition-colors duration-200 ${
-              activeInStock ? "bg-[#111111]" : "bg-[#e5e7eb]"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
-                activeInStock ? "translate-x-4" : "translate-x-0.5"
-              }`}
-            />
-          </span>
-        </button>
-      </div>
+      )}
     </div>
   );
 }
