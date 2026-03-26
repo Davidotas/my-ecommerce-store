@@ -71,9 +71,9 @@ export default function Footer({ categories, settings }: Props) {
     <footer ref={ref} className="bg-white border-t border-[#e5e7eb] text-[#111111]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10">
         {/* Top grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-10 mb-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-14">
           {/* Brand */}
-          <motion.div {...stagger(0)} className="col-span-2 sm:col-span-1">
+          <motion.div {...stagger(0)} className="col-span-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/mykolo-logo.png"

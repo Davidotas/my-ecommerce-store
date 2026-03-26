@@ -75,7 +75,7 @@ export default function Hero({ settings }: { settings: StoreSettings | null }) {
 
         {/* Word-by-word animated headline */}
         <h1
-          className="text-[clamp(52px,9vw,120px)] text-white max-w-4xl mb-8 overflow-hidden"
+          className="text-[clamp(36px,9vw,120px)] text-white max-w-4xl mb-8 overflow-hidden"
           style={{ lineHeight: "0.92", letterSpacing: "-0.03em" }}
         >
           {words.map((word, i) => (

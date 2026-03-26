@@ -87,7 +87,7 @@ export default function Navbar({ categories, settings }: Props) {
           <div className="flex items-center justify-between h-[68px]">
 
             {/* Left nav */}
-            <div className="hidden md:flex items-center gap-8 min-w-[200px]">
+            <div className="hidden lg:flex items-center gap-8 min-w-[200px]">
               {navLinks.map((l) => (
                 <Link
                   key={l.label}
@@ -200,7 +200,7 @@ export default function Navbar({ categories, settings }: Props) {
               {/* Hamburger */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
-                className="md:hidden flex items-center justify-center w-9 h-9 text-[#6b7280] hover:text-[#111111] transition-colors"
+                className="lg:hidden flex items-center justify-center w-9 h-9 text-[#6b7280] hover:text-[#111111] transition-colors"
                 onClick={() => setMobileOpen((p) => !p)} aria-label="Menu">
                 <span className="flex flex-col gap-[5px] w-4">
                   <motion.span animate={mobileOpen ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }} className="block h-px w-full bg-current" />
