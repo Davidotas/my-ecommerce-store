@@ -98,13 +98,13 @@ export default function Navbar({ categories, settings }: Props) {
                 </Link>
               ))}
               <div ref={shopRef} onMouseEnter={openShop} onMouseLeave={closeShop}>
-                <button className={`nav-underline flex items-center gap-1 text-[11px] tracking-[0.18em] uppercase font-medium transition-colors duration-200 ${shopOpen ? "text-[#111111]" : "text-[#6b7280] hover:text-[#111111]"}`}>
+                <Link href="/shop" className={`nav-underline flex items-center gap-1 text-[11px] tracking-[0.18em] uppercase font-medium transition-colors duration-200 ${shopOpen ? "text-[#111111]" : "text-[#6b7280] hover:text-[#111111]"}`}>
                   Shop
                   <motion.svg animate={{ rotate: shopOpen ? 180 : 0 }} transition={{ duration: 0.25 }}
                     className="w-3 h-3 mt-px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </motion.svg>
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -233,7 +233,7 @@ export default function Navbar({ categories, settings }: Props) {
                       <motion.li key={cat.id}
                         initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.28, delay: i * 0.04 }}>
-                        <Link href={cat.slug ? `/?category=${cat.slug}` : "/"} onClick={() => setShopOpen(false)}
+                        <Link href={cat.slug ? `/shop?categories=${cat.slug}` : "/shop"} onClick={() => setShopOpen(false)}
                           onMouseEnter={() => setHoveredCat(i)}
                           className="group flex items-center justify-between py-3 border-b border-[#f5f5f3] hover:border-[#d1d5db] transition-all">
                           <span className="text-sm font-medium text-[#6b7280] group-hover:text-[#111111] group-hover:translate-x-1 transition-all duration-200 inline-block">
@@ -252,9 +252,9 @@ export default function Navbar({ categories, settings }: Props) {
                   <div className="grid grid-cols-3 gap-3">
                     {(categories.length > 0 ? categories : [{ id: "a", name: "New", slug: "new" }, { id: "b", name: "Women", slug: "women" }, { id: "c", name: "Men", slug: "men" }]).slice(0, 6).map((cat, i) => (
                       <motion.div key={cat.id} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3, delay: i * 0.05 }}>
-                        <Link href={`/?category=${cat.slug}`} onClick={() => setShopOpen(false)}
+                        <Link href={`/shop?categories=${cat.slug}`} onClick={() => setShopOpen(false)}
                           className={`group relative block overflow-hidden aspect-[3/4] bg-[#f5f5f3] ${hoveredCat === i ? "ring-2 ring-[#111111]" : ""}`}>
-                          <Image src={CATEGORY_IMAGES[i % CATEGORY_IMAGES.length]} alt={cat.name} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]" />
+                          <Image src={(cat as Category & { image_url?: string }).image_url || CATEGORY_IMAGES[i % CATEGORY_IMAGES.length]} alt={cat.name} fill unoptimized={!!(cat as Category & { image_url?: string }).image_url} className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]" />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-500" />
                           <div className="absolute bottom-0 left-0 right-0 p-3">
                             <p className="text-white text-xs font-semibold tracking-wide">{cat.name}</p>
@@ -294,8 +294,8 @@ export default function Navbar({ categories, settings }: Props) {
               <ul>
                 {[
                   { label: "New Arrivals", href: "/" },
-                  { label: "All Products", href: "/" },
-                  ...categories.map((c) => ({ label: c.name, href: `/?category=${c.slug}` })),
+                  { label: "All Products", href: "/shop" },
+                  ...categories.map((c) => ({ label: c.name, href: `/shop?categories=${c.slug}` })),
                   { label: "About", href: "/about" },
                   { label: "Contact", href: "/contact" },
                 ].map((link, i) => (

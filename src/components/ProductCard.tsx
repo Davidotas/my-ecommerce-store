@@ -9,7 +9,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { formatCurrency } from "@/lib/currency";
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ product, isNew }: { product: Product; isNew?: boolean }) {
   const { addItem } = useCart();
   const { currency } = useCurrency();
   const { toggle, has } = useWishlist();
@@ -39,6 +39,12 @@ export default function ProductCard({ product }: { product: Product }) {
           )}
         </Link>
 
+        {/* New badge */}
+        {isNew && !discount && (
+          <span className="absolute top-3 left-3 bg-white text-[#111111] text-[9px] font-bold px-2.5 py-1 tracking-widest border border-[#111111] z-10">
+            NEW
+          </span>
+        )}
         {/* Sale badge */}
         {discount && (
           <span className="absolute top-3 left-3 bg-[#111111] text-white text-[10px] font-semibold px-2.5 py-1 tracking-wider z-10">

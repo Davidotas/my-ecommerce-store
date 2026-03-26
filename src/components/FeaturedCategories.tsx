@@ -42,7 +42,7 @@ export default function FeaturedCategories({ categories }: Props) {
           <h2 className="text-[clamp(36px,5vw,60px)] text-[#111111]">Categories</h2>
         </div>
         <Link
-          href="/"
+          href="/shop"
           className="nav-underline text-sm text-[#6b7280] hover:text-[#111111] transition-colors hidden sm:block"
         >
           View all
@@ -58,7 +58,7 @@ export default function FeaturedCategories({ categories }: Props) {
             animate={gridInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
           >
-            <Link href={`/?category=${cat.slug}`} className="group block">
+            <Link href={`/shop?categories=${cat.slug}`} className="group block">
               {/* Image card */}
               <div className="relative overflow-hidden rounded-2xl aspect-[3/4] bg-[#f5f5f3] mb-3">
                 <Image

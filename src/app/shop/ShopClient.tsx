@@ -10,16 +10,15 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 const SORT_OPTIONS = [
-  { label: "Relevance", value: "" },
+  { label: "Newest", value: "" },
   { label: "Price: Low to High", value: "price_asc" },
   { label: "Price: High to Low", value: "price_desc" },
-  { label: "Newest", value: "newest" },
+  { label: "Name A–Z", value: "name_az" },
 ];
 
 type Props = {
   products: Product[];
   categories: Category[];
-  query: string;
   activeCategories: string[];
   activeSort?: string;
   activeMin?: number;
@@ -27,10 +26,9 @@ type Props = {
   activeInStock: boolean;
 };
 
-export default function SearchResultsClient({
+export default function ShopClient({
   products,
   categories,
-  query,
   activeCategories,
   activeSort,
   activeMin,
@@ -54,7 +52,6 @@ export default function SearchResultsClient({
 
   function buildParams(overrides: Record<string, string | undefined>) {
     const p = new URLSearchParams();
-    if (query) p.set("q", query);
     if (activeCategories.length > 0)
       p.set("categories", activeCategories.join(","));
     if (activeSort) p.set("sort", activeSort);
@@ -73,36 +70,34 @@ export default function SearchResultsClient({
       ? activeCategories.filter((s) => s !== slug)
       : [...activeCategories, slug];
     const p = new URLSearchParams();
-    if (query) p.set("q", query);
     if (next.length > 0) p.set("categories", next.join(","));
     if (activeSort) p.set("sort", activeSort);
     if (activeMin) p.set("min", String(activeMin));
     if (activeMax) p.set("max", String(activeMax));
     if (activeInStock) p.set("inStock", "true");
-    router.push(`/search?${p.toString()}`);
+    router.push(`/shop?${p.toString()}`);
   }
 
   function applyPrice() {
     const minCents = minInput ? Math.round(parseFloat(minInput) * 100) : undefined;
     const maxCents = maxInput ? Math.round(parseFloat(maxInput) * 100) : undefined;
     const p = new URLSearchParams();
-    if (query) p.set("q", query);
     if (activeCategories.length > 0) p.set("categories", activeCategories.join(","));
     if (activeSort) p.set("sort", activeSort);
     if (minCents) p.set("min", String(minCents));
     if (maxCents) p.set("max", String(maxCents));
     if (activeInStock) p.set("inStock", "true");
-    router.push(`/search?${p.toString()}`);
+    router.push(`/shop?${p.toString()}`);
   }
 
-  function clearFilters() {
+  function clearAll() {
     setMinInput("");
     setMaxInput("");
-    router.push(query ? `/search?q=${encodeURIComponent(query)}` : "/search");
+    router.push("/shop");
   }
 
   const sidebar = (
-    <SearchSidebar
+    <ShopSidebar
       categories={categories}
       activeCategories={activeCategories}
       activeSort={activeSort}
@@ -112,38 +107,33 @@ export default function SearchResultsClient({
       filterCount={filterCount}
       onMinInput={setMinInput}
       onMaxInput={setMaxInput}
-      onSort={(v) => router.push(`/search?${buildParams({ sort: v || undefined })}`)}
+      onSort={(v) =>
+        router.push(`/shop?${buildParams({ sort: v || undefined })}`)
+      }
       onToggleCategory={toggleCategory}
       onToggleInStock={() =>
         router.push(
-          `/search?${buildParams({ inStock: activeInStock ? undefined : "true" })}`
+          `/shop?${buildParams({ inStock: activeInStock ? undefined : "true" })}`
         )
       }
       onApplyPrice={applyPrice}
-      onClearAll={clearFilters}
+      onClearAll={clearAll}
     />
   );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Header */}
+      {/* Page header */}
       <div className="mb-10">
         <p className="text-[11px] tracking-[0.5em] uppercase text-[#9ca3af] mb-2">
-          Search results
+          Explore our collection
         </p>
         <div className="flex items-end justify-between flex-wrap gap-4">
-          <h1 className="text-[clamp(28px,4vw,48px)] text-[#111111]">
-            {query ? (
-              <>
-                Results for &ldquo;<em>{query}</em>&rdquo;
-              </>
-            ) : (
-              "Search"
-            )}
+          <h1 className="text-[clamp(32px,5vw,56px)] tracking-tight text-[#111111] font-light">
+            Shop
           </h1>
           <p className="text-sm text-[#9ca3af]">
-            {products.length} {products.length === 1 ? "product" : "products"}{" "}
-            found
+            {products.length} {products.length === 1 ? "product" : "products"}
           </p>
         </div>
       </div>
@@ -174,45 +164,54 @@ export default function SearchResultsClient({
                   d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"
                 />
               </svg>
-              Filter &amp; Sort
+              Filters
               {filterCount > 0 && (
                 <span className="bg-[#111111] text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
                   {filterCount}
                 </span>
               )}
             </button>
-            <p className="text-xs text-[#9ca3af]">{products.length} found</p>
+            <select
+              value={activeSort ?? ""}
+              onChange={(e) =>
+                router.push(
+                  `/shop?${buildParams({ sort: e.target.value || undefined })}`
+                )
+              }
+              className="text-sm border border-[#e5e7eb] px-3 py-2 text-[#111111] bg-white focus:outline-none focus:border-[#111111]"
+            >
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Grid */}
-          {!query.trim() ? (
-            <div className="py-24 text-center">
-              <p className="text-[#9ca3af] text-sm">
-                Enter a search term above to find products.
-              </p>
-            </div>
-          ) : products.length === 0 ? (
+          {/* Product grid */}
+          {products.length === 0 ? (
             <div className="py-24 text-center">
               <p className="text-[#111111] text-sm font-medium mb-2">
-                No products found for &ldquo;{query}&rdquo;
+                No products match your filters
               </p>
               <p className="text-[#9ca3af] text-xs mb-6">
-                Try different keywords or browse all products.
+                Try adjusting or clearing your filters.
               </p>
-              <a
-                href="/shop"
+              <button
+                onClick={clearAll}
                 className="text-xs text-[#111111] underline underline-offset-2"
               >
-                Browse all products
-              </a>
+                Clear all filters
+              </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-12">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-12">
               {products.map((product, i) => {
-                const isNew = product.createdAt
-                  ? Date.now() - new Date(product.createdAt).getTime() <
-                    ONE_WEEK_MS
-                  : false;
+                const isNew =
+                  product.createdAt
+                    ? Date.now() - new Date(product.createdAt).getTime() <
+                      ONE_WEEK_MS
+                    : false;
                 return (
                   <motion.div
                     key={product.id}
@@ -220,7 +219,7 @@ export default function SearchResultsClient({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
                       duration: 0.5,
-                      delay: Math.min(i * 0.04, 0.3),
+                      delay: Math.min(i * 0.04, 0.32),
                       ease: EASE,
                     }}
                   >
@@ -253,7 +252,12 @@ export default function SearchResultsClient({
             >
               <div className="flex items-center justify-between px-5 py-4 border-b border-[#f3f4f6]">
                 <span className="text-sm font-semibold text-[#111111]">
-                  Filter &amp; Sort
+                  Filters
+                  {filterCount > 0 && (
+                    <span className="ml-2 bg-[#111111] text-white text-[9px] font-bold w-4 h-4 inline-flex items-center justify-center rounded-full">
+                      {filterCount}
+                    </span>
+                  )}
                 </span>
                 <button onClick={() => setFiltersOpen(false)}>
                   <svg
@@ -280,7 +284,7 @@ export default function SearchResultsClient({
   );
 }
 
-function SearchSidebar({
+function ShopSidebar({
   categories,
   activeCategories,
   activeSort,
@@ -416,25 +420,29 @@ function SearchSidebar({
           Price range
         </p>
         <div className="flex items-center gap-2 mb-3">
-          <input
-            type="number"
-            min="0"
-            placeholder="Min"
-            value={minInput}
-            onChange={(e) => onMinInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && onApplyPrice()}
-            className="w-full border border-[#e5e7eb] text-sm px-2.5 py-1.5 text-[#111111] focus:outline-none focus:border-[#111111] placeholder-[#c0c0c0]"
-          />
-          <span className="text-[#9ca3af] text-xs shrink-0">—</span>
-          <input
-            type="number"
-            min="0"
-            placeholder="Max"
-            value={maxInput}
-            onChange={(e) => onMaxInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && onApplyPrice()}
-            className="w-full border border-[#e5e7eb] text-sm px-2.5 py-1.5 text-[#111111] focus:outline-none focus:border-[#111111] placeholder-[#c0c0c0]"
-          />
+          <div className="flex-1">
+            <input
+              type="number"
+              min="0"
+              placeholder="Min"
+              value={minInput}
+              onChange={(e) => onMinInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && onApplyPrice()}
+              className="w-full border border-[#e5e7eb] text-sm px-2.5 py-1.5 text-[#111111] focus:outline-none focus:border-[#111111] placeholder-[#c0c0c0]"
+            />
+          </div>
+          <span className="text-[#9ca3af] text-xs">—</span>
+          <div className="flex-1">
+            <input
+              type="number"
+              min="0"
+              placeholder="Max"
+              value={maxInput}
+              onChange={(e) => onMaxInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && onApplyPrice()}
+              className="w-full border border-[#e5e7eb] text-sm px-2.5 py-1.5 text-[#111111] focus:outline-none focus:border-[#111111] placeholder-[#c0c0c0]"
+            />
+          </div>
         </div>
         <button
           onClick={onApplyPrice}

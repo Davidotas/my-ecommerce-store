@@ -3,15 +3,14 @@ import { supabase } from "@/lib/supabase";
 import { fromDb, DbProduct, Category, StoreSettings } from "@/lib/products";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import SearchResultsClient from "./SearchResultsClient";
+import ShopClient from "./ShopClient";
 
 export const revalidate = 0;
 
-export default async function SearchPage({
+export default async function ShopPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    q?: string;
     categories?: string;
     sort?: string;
     min?: string;
@@ -20,7 +19,6 @@ export default async function SearchPage({
   }>;
 }) {
   const {
-    q = "",
     categories: categoriesParam,
     sort,
     min,
@@ -36,49 +34,51 @@ export default async function SearchPage({
   const categories = (allCategories as Category[]) ?? [];
   const settings = settingsData as StoreSettings | null;
 
+  // Build product query
+  let query = supabase
+    .from("products")
+    .select("*, categories(id, name, slug)");
+
+  // Category filter (multi-select, comma-separated slugs)
   const activeSlugs = categoriesParam
     ? categoriesParam.split(",").filter(Boolean)
     : [];
 
-  let products: ReturnType<typeof fromDb>[] = [];
-
-  if (q.trim()) {
-    let query = supabase
-      .from("products")
-      .select("*, categories(id, name, slug)")
-      .or(`name.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%`);
-
-    if (activeSlugs.length > 0) {
-      const { data: catRows } = await supabase
-        .from("categories")
-        .select("id")
-        .in("slug", activeSlugs);
-      const catIds = (catRows ?? []).map((r: { id: string }) => r.id);
-      if (catIds.length > 0) query = query.in("category_id", catIds);
+  if (activeSlugs.length > 0) {
+    const { data: catRows } = await supabase
+      .from("categories")
+      .select("id")
+      .in("slug", activeSlugs);
+    const catIds = (catRows ?? []).map((r: { id: string }) => r.id);
+    if (catIds.length > 0) {
+      query = query.in("category_id", catIds);
     }
-
-    if (min) query = query.gte("price", parseInt(min));
-    if (max) query = query.lte("price", parseInt(max));
-    if (inStock === "true") query = query.gt("stock", 0);
-
-    if (sort === "price_asc") query = query.order("price", { ascending: true });
-    else if (sort === "price_desc")
-      query = query.order("price", { ascending: false });
-    else query = query.order("created_at", { ascending: false });
-
-    const { data: dbProducts } = await query;
-    products = (dbProducts ?? []).map((p) => fromDb(p as DbProduct));
   }
+
+  // Price range (cents)
+  if (min) query = query.gte("price", parseInt(min));
+  if (max) query = query.lte("price", parseInt(max));
+
+  // In-stock filter
+  if (inStock === "true") query = query.gt("stock", 0);
+
+  // Sort
+  if (sort === "price_asc") query = query.order("price", { ascending: true });
+  else if (sort === "price_desc") query = query.order("price", { ascending: false });
+  else if (sort === "name_az") query = query.order("name", { ascending: true });
+  else query = query.order("created_at", { ascending: false });
+
+  const { data: dbProducts } = await query;
+  const products = (dbProducts ?? []).map((p) => fromDb(p as DbProduct));
 
   return (
     <div className="bg-white min-h-screen">
       <Navbar categories={categories} settings={settings} />
       <div className="pt-[68px]">
         <Suspense>
-          <SearchResultsClient
+          <ShopClient
             products={products}
             categories={categories}
-            query={q}
             activeCategories={activeSlugs}
             activeSort={sort}
             activeMin={min ? parseInt(min) : undefined}

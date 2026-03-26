@@ -9,6 +9,7 @@ export type Product = {
   category: string;
   categoryId: string | null;
   stock: number;
+  createdAt: string;
 };
 
 export type DbProduct = {
@@ -66,6 +67,7 @@ export function fromDb(p: DbProduct): Product {
     category: p.categories?.name ?? p.category ?? "",
     categoryId: p.category_id ?? null,
     stock: p.stock ?? 0,
+    createdAt: p.created_at ?? "",
   };
 }
 
