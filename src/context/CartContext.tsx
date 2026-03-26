@@ -20,7 +20,7 @@ export type CartItem = Product & {
 type CartState = { items: CartItem[] };
 
 type CartAction =
-  | { type: "ADD_ITEM"; product: Product; customizationId?: string; customization?: CustomizationData }
+  | { type: "ADD_ITEM"; product: Product; customizationId?: string; customization?: CustomizationData; count?: number }
   | { type: "REMOVE_ITEM"; id: string; customizationId?: string }
   | { type: "UPDATE_QUANTITY"; id: string; quantity: number; customizationId?: string }
   | { type: "CLEAR_CART" }
@@ -29,19 +29,20 @@ type CartAction =
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "ADD_ITEM": {
+      const count = action.count ?? 1;
       // Customized items always get their own cart slot
       if (action.customizationId) {
-        return { items: [...state.items, { ...action.product, quantity: 1, customizationId: action.customizationId, customization: action.customization }] };
+        return { items: [...state.items, { ...action.product, quantity: count, customizationId: action.customizationId, customization: action.customization }] };
       }
       const existing = state.items.find((i) => i.id === action.product.id && !i.customizationId);
       if (existing) {
         return {
           items: state.items.map((i) =>
-            i.id === action.product.id && !i.customizationId ? { ...i, quantity: i.quantity + 1 } : i
+            i.id === action.product.id && !i.customizationId ? { ...i, quantity: i.quantity + count } : i
           ),
         };
       }
-      return { items: [...state.items, { ...action.product, quantity: 1 }] };
+      return { items: [...state.items, { ...action.product, quantity: count }] };
     }
     case "REMOVE_ITEM":
       if (action.customizationId) {
@@ -68,7 +69,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
 type CartContextType = {
   items: CartItem[];
-  addItem: (product: Product) => void;
+  addItem: (product: Product, count?: number) => void;
   addCustomizedItem: (product: Product, customization: CustomizationData) => void;
   removeItem: (id: string, customizationId?: string) => void;
   updateQuantity: (id: string, quantity: number, customizationId?: string) => void;
@@ -166,8 +167,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     <CartContext.Provider
       value={{
         items: state.items,
-        addItem: (product) => {
-          dispatch({ type: "ADD_ITEM", product });
+        addItem: (product, count = 1) => {
+          dispatch({ type: "ADD_ITEM", product, count });
           setLastAdded((n) => n + 1);
         },
         addCustomizedItem: (product, customization) => {
