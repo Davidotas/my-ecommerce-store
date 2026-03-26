@@ -62,9 +62,10 @@ export default function FeaturedCategories({ categories }: Props) {
               {/* Image card */}
               <div className="relative overflow-hidden rounded-2xl aspect-[3/4] bg-[#f5f5f3] mb-3">
                 <Image
-                  src={FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]}
+                  src={cat.image_url || FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]}
                   alt={cat.name}
                   fill
+                  unoptimized={!!cat.image_url}
                   className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
                 />
               </div>

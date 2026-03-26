@@ -7,9 +7,10 @@ export async function addCategory(formData: FormData) {
   const name = (formData.get("name") as string)?.trim();
   if (!name) return { error: "Name is required." };
   const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  const image_url = (formData.get("image_url") as string) ?? "";
 
   const supabase = createAdminClient();
-  const { error } = await supabase.from("categories").insert({ name, slug });
+  const { error } = await supabase.from("categories").insert({ name, slug, image_url });
   if (error) return { error: error.message };
 
   revalidatePath("/admin/categories");
@@ -31,9 +32,10 @@ export async function updateCategory(formData: FormData) {
   const name = (formData.get("name") as string)?.trim();
   if (!name) return { error: "Name is required." };
   const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  const image_url = (formData.get("image_url") as string) ?? "";
 
   const supabase = createAdminClient();
-  const { error } = await supabase.from("categories").update({ name, slug }).eq("id", id);
+  const { error } = await supabase.from("categories").update({ name, slug, image_url }).eq("id", id);
   if (error) return { error: error.message };
 
   revalidatePath("/admin/categories");
