@@ -11,6 +11,10 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "MyKolo Mysibi Collection",
   description: "Handcrafted wood art and home pieces made from reclaimed materials. Wood spoons, plates, wall art, key holders, and more.",
+  icons: {
+    icon: "/mykolo-logo.png",
+    apple: "/mykolo-logo.png",
+  },
 };
 
 export const revalidate = 60;
