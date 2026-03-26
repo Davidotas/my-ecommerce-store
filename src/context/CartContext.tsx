@@ -4,41 +4,59 @@ import { createContext, useContext, useReducer, useState, useEffect, useRef, Rea
 import { Product } from "@/lib/products";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
-export type CartItem = Product & { quantity: number };
+export type CustomizationData = {
+  fabricJson: string;
+  previewDataUrl: string;
+  summary: string;
+  productId: string;
+};
+
+export type CartItem = Product & {
+  quantity: number;
+  customizationId?: string;
+  customization?: CustomizationData;
+};
 
 type CartState = { items: CartItem[] };
 
 type CartAction =
-  | { type: "ADD_ITEM"; product: Product }
-  | { type: "REMOVE_ITEM"; id: string }
-  | { type: "UPDATE_QUANTITY"; id: string; quantity: number }
+  | { type: "ADD_ITEM"; product: Product; customizationId?: string; customization?: CustomizationData }
+  | { type: "REMOVE_ITEM"; id: string; customizationId?: string }
+  | { type: "UPDATE_QUANTITY"; id: string; quantity: number; customizationId?: string }
   | { type: "CLEAR_CART" }
   | { type: "LOAD_ITEMS"; items: CartItem[] };
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "ADD_ITEM": {
-      const existing = state.items.find((i) => i.id === action.product.id);
+      // Customized items always get their own cart slot
+      if (action.customizationId) {
+        return { items: [...state.items, { ...action.product, quantity: 1, customizationId: action.customizationId, customization: action.customization }] };
+      }
+      const existing = state.items.find((i) => i.id === action.product.id && !i.customizationId);
       if (existing) {
         return {
           items: state.items.map((i) =>
-            i.id === action.product.id ? { ...i, quantity: i.quantity + 1 } : i
+            i.id === action.product.id && !i.customizationId ? { ...i, quantity: i.quantity + 1 } : i
           ),
         };
       }
       return { items: [...state.items, { ...action.product, quantity: 1 }] };
     }
     case "REMOVE_ITEM":
-      return { items: state.items.filter((i) => i.id !== action.id) };
-    case "UPDATE_QUANTITY":
-      if (action.quantity <= 0) {
-        return { items: state.items.filter((i) => i.id !== action.id) };
+      if (action.customizationId) {
+        return { items: state.items.filter((i) => i.customizationId !== action.customizationId) };
       }
-      return {
-        items: state.items.map((i) =>
-          i.id === action.id ? { ...i, quantity: action.quantity } : i
-        ),
-      };
+      return { items: state.items.filter((i) => !(i.id === action.id && !i.customizationId)) };
+    case "UPDATE_QUANTITY": {
+      const match = action.customizationId
+        ? (i: CartItem) => i.customizationId === action.customizationId
+        : (i: CartItem) => i.id === action.id && !i.customizationId;
+      if (action.quantity <= 0) {
+        return { items: state.items.filter((i) => !match(i)) };
+      }
+      return { items: state.items.map((i) => match(i) ? { ...i, quantity: action.quantity } : i) };
+    }
     case "CLEAR_CART":
       return { items: [] };
     case "LOAD_ITEMS":
@@ -51,12 +69,13 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 type CartContextType = {
   items: CartItem[];
   addItem: (product: Product) => void;
-  removeItem: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  addCustomizedItem: (product: Product, customization: CustomizationData) => void;
+  removeItem: (id: string, customizationId?: string) => void;
+  updateQuantity: (id: string, quantity: number, customizationId?: string) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
-  lastAdded: number; // increments on each addItem — use to trigger navbar bounce
+  lastAdded: number;
 };
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -151,9 +170,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
           dispatch({ type: "ADD_ITEM", product });
           setLastAdded((n) => n + 1);
         },
-        removeItem: (id) => dispatch({ type: "REMOVE_ITEM", id }),
-        updateQuantity: (id, quantity) =>
-          dispatch({ type: "UPDATE_QUANTITY", id, quantity }),
+        addCustomizedItem: (product, customization) => {
+          const customizationId = crypto.randomUUID();
+          dispatch({ type: "ADD_ITEM", product, customizationId, customization });
+          setLastAdded((n) => n + 1);
+        },
+        removeItem: (id, customizationId) => dispatch({ type: "REMOVE_ITEM", id, customizationId }),
+        updateQuantity: (id, quantity, customizationId) =>
+          dispatch({ type: "UPDATE_QUANTITY", id, quantity, customizationId }),
         clearCart: () => dispatch({ type: "CLEAR_CART" }),
         totalItems,
         totalPrice,

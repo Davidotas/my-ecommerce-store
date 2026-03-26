@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   // Save a pending order before redirecting to Stripe
   let orderId: string | null = null;
   if (userId) {
-    const orderItems = items.map((item: { id: string; quantity: number }) => {
+    const orderItems = items.map((item: { id: string; quantity: number; customization?: { summary: string } }) => {
       const product = productMap.get(item.id);
       return {
         id: item.id,
@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
         price: product?.price ?? 0,
         quantity: item.quantity,
         image: product?.image ?? "",
+        ...(item.customization ? { customization: { summary: item.customization.summary } } : {}),
       };
     });
 

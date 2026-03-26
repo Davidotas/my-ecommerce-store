@@ -81,7 +81,7 @@ export default async function AdminOrdersPage({
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {orders.map((order) => {
-                  const items: { name: string; quantity: number; price: number }[] =
+                  const items: { name: string; quantity: number; price: number; customization?: { summary: string } }[] =
                     Array.isArray(order.items) ? order.items : [];
                   const statusColor = STATUS_COLORS[order.status] ?? "bg-gray-100 text-gray-600";
 
@@ -104,10 +104,15 @@ export default async function AdminOrdersPage({
                           </p>
                         )}
                       </td>
-                      <td className="px-5 py-4 max-w-[200px]">
+                      <td className="px-5 py-4 max-w-[220px]">
                         {items.map((item, i) => (
-                          <div key={i} className="text-xs text-gray-600 truncate">
-                            {item.name} × {item.quantity}
+                          <div key={i} className="mb-1 last:mb-0">
+                            <p className="text-xs text-gray-600 truncate">{item.name} × {item.quantity}</p>
+                            {item.customization?.summary && (
+                              <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] bg-violet-50 text-violet-700 border border-violet-200 px-1.5 py-0.5 rounded">
+                                ✏ {item.customization.summary}
+                              </span>
+                            )}
                           </div>
                         ))}
                       </td>
