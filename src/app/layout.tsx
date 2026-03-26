@@ -1,12 +1,8 @@
 import type { Metadata } from "next";
-import { Ojuju, Inter } from "next/font/google";
 import "./globals.css";
 import { supabase } from "@/lib/supabase";
 import { Category, StoreSettings } from "@/lib/products";
 import ClientWrapper from "@/components/ClientWrapper";
-
-const ojuju = Ojuju({ variable: "--font-ojuju", subsets: ["latin"] });
-const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "MyKolo Mysibi Collection",
@@ -28,7 +24,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${ojuju.variable} ${inter.variable} bg-white text-[#111111] min-h-screen`}
+        className="bg-white text-[#111111] min-h-screen"
         suppressHydrationWarning
       >
         <ClientWrapper

@@ -10,8 +10,8 @@
   --error:     #ef4444;
   --accent:    #d2ff1f;
 
-  --font-heading: "Ojuju", sans-serif;
-  --font-body:    "Inter", sans-serif;
+  --font-heading: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
 
   --background: var(--bg);
   --foreground: var(--fg);
@@ -40,22 +40,22 @@ body {
 /* ── Heading scale ─────────────────────────────────────────────────────────── */
 h1 {
   font-family:    var(--font-heading);
-  font-weight:    300;
-  letter-spacing: -0.04em;
-  line-height:    0.95;
+  font-weight:    700;
+  letter-spacing: -0.03em;
+  line-height:    1.0;
 }
 
 h2 {
   font-family:    var(--font-heading);
-  font-weight:    300;
-  letter-spacing: -0.03em;
-  line-height:    1.05;
+  font-weight:    600;
+  letter-spacing: -0.025em;
+  line-height:    1.1;
 }
 
 h3, h4, h5, h6 {
   font-family:    var(--font-heading);
-  font-weight:    400;
-  letter-spacing: -0.02em;
+  font-weight:    600;
+  letter-spacing: -0.015em;
 }
 
 ::selection {
