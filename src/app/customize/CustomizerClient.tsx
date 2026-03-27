@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useRef } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { Product } from "@/lib/products";
+
+const ProductViewer3D = dynamic(() => import("./ProductViewer3D"), { ssr: false });
 
 // ─── Step data ────────────────────────────────────────────────────────────────
 
@@ -229,6 +232,7 @@ export default function CustomizerClient() {
   const [aiLoading, setAiLoading]         = useState(false);
   const [aiError, setAiError]             = useState("");
   const [added, setAdded]                 = useState(false);
+  const [uploadedFile, setUploadedFile]   = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const steps = quickMode ? QUICK_STEPS : Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1);
@@ -484,7 +488,11 @@ export default function CustomizerClient() {
             Upload Image / Logo <span className="normal-case tracking-normal font-normal ml-1 text-[#6b7280]">(+£12)</span>
           </label>
           <input ref={fileRef} type="file" accept="image/*" className="hidden"
-            onChange={e => update("uploadedImageName", e.target.files?.[0]?.name ?? "")} />
+            onChange={e => {
+              const file = e.target.files?.[0] ?? null;
+              setUploadedFile(file);
+              update("uploadedImageName", file?.name ?? "");
+            }} />
           <div className="flex items-center gap-3">
             <button type="button" onClick={() => fileRef.current?.click()}
               className="border border-[#e8e8e5] px-5 py-2.5 text-sm text-[#6b7280] hover:border-[#111111] hover:text-[#111111] transition-all">
@@ -494,7 +502,7 @@ export default function CustomizerClient() {
               ? <span className="text-sm text-[#111111] truncate max-w-[200px]">{sel.uploadedImageName}</span>
               : <span className="text-sm text-[#9ca3af]">No file chosen</span>}
             {sel.uploadedImageName && (
-              <button onClick={() => update("uploadedImageName", "")}
+              <button onClick={() => { setUploadedFile(null); update("uploadedImageName", ""); }}
                 className="text-[#ef4444] text-xs hover:underline">Remove</button>
             )}
           </div>
@@ -736,10 +744,26 @@ export default function CustomizerClient() {
   // ─── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#fafaf8]">
+    <div className="flex flex-col lg:flex-row min-h-screen">
+
+      {/* ── Left: 3D Viewer ── */}
+      <div className="h-[260px] sm:h-[340px] lg:h-screen lg:w-[45%] lg:sticky lg:top-0 flex-shrink-0">
+        <ProductViewer3D
+          productType={sel.productType}
+          wood={sel.wood}
+          finish={sel.finish}
+          colour={sel.colour}
+          engravingText={sel.engravingText}
+          uploadedFile={uploadedFile}
+        />
+      </div>
+
+      {/* ── Right: Customizer ── */}
+      <div className="flex-1 lg:w-[55%] lg:h-screen lg:overflow-y-auto flex flex-col bg-[#fafaf8]">
+
       {/* ── Sticky header ── */}
       <div className="bg-white border-b border-[#e8e8e5] sticky top-0 z-20">
-        <div className="max-w-3xl mx-auto px-5 py-4 flex items-center justify-between gap-4">
+        <div className="px-5 py-4 flex items-center justify-between gap-4">
           <div>
             <p className="text-[10px] tracking-[0.35em] uppercase text-[#9ca3af] font-medium">
               {quickMode ? "Quick Custom" : "Custom Order"}
@@ -758,7 +782,7 @@ export default function CustomizerClient() {
         </div>
 
         {/* Progress bar */}
-        <div className="max-w-3xl mx-auto px-5 pb-4">
+        <div className="px-5 pb-4">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[10px] text-[#9ca3af]">
               Step {stepIdx + 1} of {steps.length}
@@ -793,7 +817,7 @@ export default function CustomizerClient() {
       </div>
 
       {/* ── Main content ── */}
-      <div className="max-w-3xl mx-auto px-5 py-10">
+      <div className="px-5 sm:px-8 py-8 flex-1">
         {/* Inspiration + AI (step 1 only) */}
         {step === 1 && (
           <div className="flex flex-wrap gap-2 mb-6">
@@ -910,6 +934,7 @@ export default function CustomizerClient() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div> {/* end right panel */}
     </div>
   );
 }
