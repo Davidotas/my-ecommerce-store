@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase";
 import { formatPrice } from "@/lib/products";
 import OrderStatusSelect from "./OrderStatusSelect";
@@ -85,10 +86,19 @@ export default async function AdminOrdersPage({
                     Array.isArray(order.items) ? order.items : [];
                   const statusColor = STATUS_COLORS[order.status] ?? "bg-gray-100 text-gray-600";
 
+                  const isCustom = items.some((i) => (i.customization as { prompt?: string } | undefined)?.prompt);
+
                   return (
                     <tr key={order.id} className="hover:bg-gray-50 align-top">
                       <td className="px-5 py-4 text-xs text-gray-500 font-mono whitespace-nowrap">
-                        #{order.id.slice(0, 8).toUpperCase()}
+                        <Link href={`/admin/orders/${order.id}`} className="hover:text-gray-900 transition-colors">
+                          #{order.id.slice(0, 8).toUpperCase()}
+                        </Link>
+                        {isCustom && (
+                          <span className="ml-2 text-[9px] bg-violet-100 text-violet-700 border border-violet-200 px-1 py-0.5 rounded">
+                            custom
+                          </span>
+                        )}
                       </td>
                       <td className="px-5 py-4 text-gray-600 whitespace-nowrap">
                         {new Date(order.created_at).toLocaleDateString("en-GB", {
@@ -120,11 +130,19 @@ export default async function AdminOrdersPage({
                         {order.total_amount ? formatPrice(order.total_amount) : "—"}
                       </td>
                       <td className="px-5 py-4">
-                        <OrderStatusSelect
-                          orderId={order.id}
-                          currentStatus={order.status}
-                          statusColor={statusColor}
-                        />
+                        <div className="flex items-center gap-2">
+                          <OrderStatusSelect
+                            orderId={order.id}
+                            currentStatus={order.status}
+                            statusColor={statusColor}
+                          />
+                          <Link
+                            href={`/admin/orders/${order.id}`}
+                            className="text-[10px] text-gray-400 hover:text-gray-700 whitespace-nowrap"
+                          >
+                            View →
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );

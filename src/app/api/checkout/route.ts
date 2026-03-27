@@ -25,40 +25,53 @@ export async function POST(req: NextRequest) {
     (dbProducts ?? []).map((p) => [p.id, fromDb(p as DbProduct)])
   );
 
-  const lineItems = items.map((item: { id: string; quantity: number }) => {
+  const lineItems = items.map((item: { id: string; name?: string; price?: number; description?: string; image?: string; quantity: number }) => {
     const product = productMap.get(item.id);
-    if (!product) throw new Error(`Product ${item.id} not found`);
+    // Fall back to cart item data for custom orders not in DB
+    const name        = product?.name        ?? item.name        ?? "Custom Order";
+    const unitAmount  = product?.price       ?? item.price       ?? 0;
+    const description = product?.description ?? item.description ?? undefined;
+    const images      = product?.image ? [product.image] : [];
     return {
       price_data: {
         currency: "usd",
-        product_data: {
-          name: product.name,
-          description: product.description || undefined,
-          images: product.image ? [product.image] : [],
-        },
-        unit_amount: product.price,
+        product_data: { name, description, images },
+        unit_amount: unitAmount,
       },
       quantity: item.quantity,
     };
   });
 
-  const totalAmount = items.reduce((sum: number, item: { id: string; quantity: number }) => {
+  const totalAmount = items.reduce((sum: number, item: { id: string; price?: number; quantity: number }) => {
     const product = productMap.get(item.id);
-    return sum + (product ? product.price * item.quantity : 0);
+    const price = product?.price ?? item.price ?? 0;
+    return sum + price * item.quantity;
   }, 0);
 
   // Save a pending order before redirecting to Stripe
   let orderId: string | null = null;
   if (userId) {
-    const orderItems = items.map((item: { id: string; quantity: number; customization?: { summary: string } }) => {
+    const orderItems = items.map((item: { id: string; name?: string; price?: number; image?: string; quantity: number; customization?: { summary: string; fabricJson?: string } }) => {
       const product = productMap.get(item.id);
+      let customizationPayload: Record<string, unknown> | undefined;
+      if (item.customization) {
+        customizationPayload = { summary: item.customization.summary };
+        // Parse smart prompt from custom order JSON
+        if (item.customization.fabricJson) {
+          try {
+            const parsed = JSON.parse(item.customization.fabricJson);
+            if (parsed.smartPrompt) customizationPayload.prompt = parsed.smartPrompt;
+            customizationPayload.details = parsed;
+          } catch { /* ignore parse errors for Fabric.js JSON */ }
+        }
+      }
       return {
         id: item.id,
-        name: product?.name ?? "",
-        price: product?.price ?? 0,
+        name:     product?.name  ?? item.name  ?? "Custom Order",
+        price:    product?.price ?? item.price ?? 0,
         quantity: item.quantity,
-        image: product?.image ?? "",
-        ...(item.customization ? { customization: { summary: item.customization.summary } } : {}),
+        image:    product?.image ?? item.image ?? "",
+        ...(customizationPayload ? { customization: customizationPayload } : {}),
       };
     });
 
