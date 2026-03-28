@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product } from "@/lib/products";
 import { type CustomizationData } from "@/context/CartContext";
@@ -10,69 +11,125 @@ import { type CustomizationData } from "@/context/CartContext";
 export type FontDef = {
   id: string;
   name: string;
-  family: string;   // CSS font-family string
-  google: string;   // Google Fonts API name (space → +)
+  family: string;
+  google: string;
   category: "Serif" | "Sans-serif" | "Script" | "Decorative" | "Monospace";
 };
 
 const FONT_CATALOGUE: FontDef[] = [
-  // Serif
   { id: "playfair",    name: "Playfair Display",   family: "'Playfair Display', Georgia, serif",    google: "Playfair+Display",   category: "Serif" },
   { id: "cormorant",   name: "Cormorant Garamond",  family: "'Cormorant Garamond', Georgia, serif",  google: "Cormorant+Garamond", category: "Serif" },
   { id: "eb-garamond", name: "EB Garamond",         family: "'EB Garamond', Georgia, serif",         google: "EB+Garamond",        category: "Serif" },
   { id: "libre-bask",  name: "Libre Baskerville",   family: "'Libre Baskerville', Georgia, serif",   google: "Libre+Baskerville",  category: "Serif" },
-  // Sans-serif
   { id: "inter",       name: "Inter",               family: "'Inter', Helvetica, sans-serif",        google: "Inter",              category: "Sans-serif" },
   { id: "montserrat",  name: "Montserrat",          family: "'Montserrat', Helvetica, sans-serif",   google: "Montserrat",         category: "Sans-serif" },
   { id: "raleway",     name: "Raleway",             family: "'Raleway', Helvetica, sans-serif",      google: "Raleway",            category: "Sans-serif" },
   { id: "josefin",     name: "Josefin Sans",        family: "'Josefin Sans', Helvetica, sans-serif", google: "Josefin+Sans",       category: "Sans-serif" },
-  // Script
   { id: "dancing",     name: "Dancing Script",      family: "'Dancing Script', cursive",             google: "Dancing+Script",     category: "Script" },
   { id: "great-vibes", name: "Great Vibes",         family: "'Great Vibes', cursive",                google: "Great+Vibes",        category: "Script" },
   { id: "pacifico",    name: "Pacifico",            family: "'Pacifico', cursive",                   google: "Pacifico",           category: "Script" },
   { id: "sacramento",  name: "Sacramento",          family: "'Sacramento', cursive",                 google: "Sacramento",         category: "Script" },
-  // Decorative
   { id: "cinzel",      name: "Cinzel",              family: "'Cinzel', serif",                       google: "Cinzel",             category: "Decorative" },
   { id: "bebas",       name: "Bebas Neue",          family: "'Bebas Neue', Impact, sans-serif",      google: "Bebas+Neue",         category: "Decorative" },
   { id: "abril",       name: "Abril Fatface",       family: "'Abril Fatface', serif",                google: "Abril+Fatface",      category: "Decorative" },
-  // Monospace
-  { id: "courier-p",   name: "Courier Prime",       family: "'Courier Prime', 'Courier New', mono",  google: "Courier+Prime",      category: "Monospace" },
+  { id: "courier-p",   name: "Courier Prime",       family: "'Courier Prime', 'Courier New', monospace", google: "Courier+Prime", category: "Monospace" },
   { id: "special-e",   name: "Special Elite",       family: "'Special Elite', cursive",              google: "Special+Elite",      category: "Monospace" },
 ];
 
 const POPULAR_IDS = ["playfair", "dancing", "great-vibes", "cinzel", "montserrat"];
-const CATEGORIES = ["Serif", "Sans-serif", "Script", "Decorative", "Monospace"] as const;
+const CATEGORIES  = ["Serif", "Sans-serif", "Script", "Decorative", "Monospace"] as const;
 
 // ─── Text colours ──────────────────────────────────────────────────────────
 
 const TEXT_COLORS = [
-  { id: "natural", label: "Natural",  fill: "#2c0f00", swatch: "linear-gradient(135deg,#9b6c45,#5c3318)" },
-  { id: "black",   label: "Black",    fill: "#111111", swatch: "#111" },
-  { id: "gold",    label: "Gold",     fill: "#c89b0a", swatch: "linear-gradient(135deg,#f0d060,#c89b0a)" },
-  { id: "silver",  label: "Silver",   fill: "#b0b0b0", swatch: "linear-gradient(135deg,#e8e8e8,#9e9e9e)" },
-  { id: "white",   label: "White",    fill: "#ffffff", swatch: "#fff" },
+  { id: "natural", label: "Natural",  fill: "#2c0f00", glow: "rgba(140,80,20,0.5)",  swatch: "linear-gradient(135deg,#9b6c45,#5c3318)" },
+  { id: "black",   label: "Black",    fill: "#111111", glow: "rgba(0,0,0,0.7)",       swatch: "#111" },
+  { id: "gold",    label: "Gold",     fill: "#d4a017", glow: "rgba(212,160,23,0.7)",  swatch: "linear-gradient(135deg,#f5d060,#c89b0a)" },
+  { id: "silver",  label: "Silver",   fill: "#d0d0d0", glow: "rgba(200,200,200,0.6)", swatch: "linear-gradient(135deg,#f0f0f0,#9e9e9e)" },
+  { id: "white",   label: "White",    fill: "#ffffff", glow: "rgba(255,255,255,0.5)", swatch: "#fff" },
 ];
 
-// ─── Product shape detection ───────────────────────────────────────────────
+// ─── Text position ─────────────────────────────────────────────────────────
+
+type PositionId = "center" | "top" | "bottom" | "left" | "right";
+
+const POSITIONS: { id: PositionId; label: string; icon: React.ReactNode }[] = [
+  {
+    id: "center", label: "Center",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <line x1="8" y1="12" x2="16" y2="12" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    id: "top", label: "Top",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <line x1="8" y1="8" x2="16" y2="8" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    id: "bottom", label: "Bottom",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <line x1="8" y1="16" x2="16" y2="16" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    id: "left", label: "Left",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <line x1="8" y1="8" x2="8" y2="16" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    id: "right", label: "Right",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <line x1="16" y1="8" x2="16" y2="16" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+];
+
+// ─── Letter spacing steps ──────────────────────────────────────────────────
+
+const LETTER_SPACING_STEPS = [
+  { label: "Normal", value: 0 },
+  { label: "Wide",   value: 3 },
+  { label: "Wider",  value: 6 },
+  { label: "Widest", value: 12 },
+];
+
+// ─── Shape detection ───────────────────────────────────────────────────────
 
 type ShapeId = "oval" | "circle" | "rect" | "tag";
 
 function detectShape(product: Product): ShapeId {
   const t = `${product.name} ${product.category ?? ""}`.toLowerCase();
-  if (t.includes("bowl"))              return "oval";
+  if (t.includes("bowl")) return "oval";
   if (t.includes("plate") || t.includes("disc")) return "circle";
   if (t.includes("tag") || t.includes("label")) return "tag";
   return "rect";
 }
 
-// ─── Canvas rendering ──────────────────────────────────────────────────────
+// ─── Canvas primitives ─────────────────────────────────────────────────────
 
 function drawGrain(ctx: CanvasRenderingContext2D, W: number, H: number) {
   ctx.fillStyle = "#c49a6c";
   ctx.fillRect(0, 0, W, H);
-  for (let i = 0; i < 30; i++) {
-    const yBase = (i / 30) * H;
-    const amp   = 3 + Math.random() * 12;
+  for (let i = 0; i < 32; i++) {
+    const yBase = (i / 32) * H;
+    const amp   = 3 + Math.random() * 14;
     const freq  = 1.5 + Math.random() * 2.5;
     const phase = Math.random() * Math.PI * 2;
     ctx.beginPath();
@@ -81,8 +138,8 @@ function drawGrain(ctx: CanvasRenderingContext2D, W: number, H: number) {
       x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
     ctx.strokeStyle = i % 3 === 0 ? "#8b5e3c" : "#a87850";
-    ctx.lineWidth   = 0.4 + Math.random() * 1.4;
-    ctx.globalAlpha = 0.12 + Math.random() * 0.32;
+    ctx.lineWidth   = 0.4 + Math.random() * 1.6;
+    ctx.globalAlpha = 0.12 + Math.random() * 0.35;
     ctx.stroke();
   }
   ctx.globalAlpha = 1;
@@ -98,10 +155,9 @@ function tracePath(ctx: CanvasRenderingContext2D, shape: ShapeId, W: number, H: 
   if (shape === "oval") {
     ctx.ellipse(W / 2, H / 2, W * 0.44, H * 0.41, 0, 0, Math.PI * 2);
   } else if (shape === "circle") {
-    const r = Math.min(W, H) * 0.41;
-    ctx.arc(W / 2, H / 2, r, 0, Math.PI * 2);
+    ctx.arc(W / 2, H / 2, Math.min(W, H) * 0.41, 0, Math.PI * 2);
   } else if (shape === "tag") {
-    const tw = W * 0.38, th = H * 0.74, r = 14;
+    const tw = W * 0.4, th = H * 0.76, r = 14;
     const tx = W / 2 - tw / 2, ty = H / 2 - th / 2;
     ctx.moveTo(tx + r, ty); ctx.lineTo(tx + tw - r, ty);
     ctx.quadraticCurveTo(tx + tw, ty, tx + tw, ty + r);
@@ -113,7 +169,7 @@ function tracePath(ctx: CanvasRenderingContext2D, shape: ShapeId, W: number, H: 
     ctx.quadraticCurveTo(tx, ty, tx + r, ty);
     ctx.closePath();
   } else {
-    const pw = W * 0.84, ph = H * 0.76, r = 14;
+    const pw = W * 0.86, ph = H * 0.78, r = 16;
     const px = (W - pw) / 2, py = (H - ph) / 2;
     ctx.moveTo(px + r, py); ctx.lineTo(px + pw - r, py);
     ctx.quadraticCurveTo(px + pw, py, px + pw, py + r);
@@ -127,40 +183,67 @@ function tracePath(ctx: CanvasRenderingContext2D, shape: ShapeId, W: number, H: 
   }
 }
 
+function getTextXY(pos: PositionId, W: number, H: number, shape: ShapeId): { x: number; y: number; vertical: boolean } {
+  const isRound = shape === "oval" || shape === "circle";
+  switch (pos) {
+    case "top":    return { x: W / 2, y: isRound ? H * 0.18 : H * 0.22, vertical: false };
+    case "bottom": return { x: W / 2, y: isRound ? H * 0.82 : H * 0.78, vertical: false };
+    case "left":   return { x: isRound ? W * 0.18 : W * 0.22, y: H / 2, vertical: true  };
+    case "right":  return { x: isRound ? W * 0.82 : W * 0.78, y: H / 2, vertical: true  };
+    default:       return { x: W / 2, y: H / 2, vertical: false };
+  }
+}
+
 function drawCurvedText(
   ctx: CanvasRenderingContext2D, text: string,
-  cx: number, cy: number, radius: number, fill: string,
+  cx: number, cy: number, radius: number, fill: string, glow: string,
+  pos: PositionId,
 ) {
   if (!text) return;
-  const span = Math.min((text.length * 0.62) / radius, 1.15) * Math.PI;
-  const start = -Math.PI / 2 - span / 2;
+  // bottom arc flips the curve
+  const flip   = pos === "bottom" ? 1 : -1;
+  const span   = Math.min((text.length * 0.65) / radius, 1.2) * Math.PI;
+  const startA = -Math.PI / 2 * flip - span / 2;
   ctx.save();
-  ctx.fillStyle = fill;
-  ctx.textAlign = "center";
+  ctx.shadowColor = glow;
+  ctx.shadowBlur  = 10;
+  ctx.fillStyle   = fill;
+  ctx.textAlign   = "center";
   ctx.textBaseline = "middle";
   for (let i = 0; i < text.length; i++) {
-    const a = start + (i / Math.max(text.length - 1, 1)) * span;
+    const a = startA + (i / Math.max(text.length - 1, 1)) * span;
     ctx.save();
-    ctx.translate(cx + radius * Math.cos(a), cy + radius * Math.sin(a));
-    ctx.rotate(a + Math.PI / 2);
+    ctx.translate(cx + radius * Math.cos(a) * flip, cy + radius * Math.sin(a) * flip * -1);
+    ctx.rotate(a * flip + Math.PI * (flip === 1 ? 1.5 : 0.5));
     ctx.fillText(text[i], 0, 0);
     ctx.restore();
   }
   ctx.restore();
 }
 
-function drawStraightText(
+function drawText(
   ctx: CanvasRenderingContext2D, text: string,
-  cx: number, cy: number, fill: string, shadow: string,
+  x: number, y: number,
+  fill: string, glow: string,
+  vertical: boolean,
 ) {
   if (!text) return;
   ctx.save();
-  ctx.textAlign = "center";
+  ctx.fillStyle    = fill;
+  ctx.textAlign    = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = shadow;
-  ctx.fillText(text, cx + 1.5, cy + 1.5);
-  ctx.fillStyle = fill;
-  ctx.fillText(text, cx, cy);
+  ctx.shadowColor  = glow;
+  ctx.shadowBlur   = 12;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 1;
+
+  if (vertical) {
+    ctx.translate(x, y);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(text, 0, 0);
+  } else {
+    ctx.fillText(text, x, y);
+  }
   ctx.restore();
 }
 
@@ -171,23 +254,24 @@ async function renderToCanvas(
     fontFamily: string;
     fontSize: number;
     colorId: string;
+    letterSpacing: number;
+    position: PositionId;
     shape: ShapeId;
     productImageSrc: string | null;
   },
 ) {
-  const { text, fontFamily, fontSize, colorId, shape, productImageSrc } = opts;
+  const { text, fontFamily, fontSize, colorId, letterSpacing, position, shape, productImageSrc } = opts;
   const W = canvas.width, H = canvas.height;
   const ctx = canvas.getContext("2d")!;
   const color = TEXT_COLORS.find(c => c.id === colorId) ?? TEXT_COLORS[0];
-  const shadowFill = colorId === "white" ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.3)";
 
   ctx.clearRect(0, 0, W, H);
 
-  // Dark surround
-  ctx.fillStyle = "#111111";
+  // Dark canvas surround
+  ctx.fillStyle = "#0e0e0e";
   ctx.fillRect(0, 0, W, H);
 
-  // Clip to product shape and fill with wood/image
+  // Clipped shape with product image or wood grain
   ctx.save();
   tracePath(ctx, shape, W, H);
   ctx.clip();
@@ -201,115 +285,101 @@ async function renderToCanvas(
         img.onerror = () => rej();
         img.src = productImageSrc;
       });
-      // Cover-fit
       const aspect = img.naturalWidth / img.naturalHeight;
-      const ca     = W / H;
+      const ca = W / H;
       let sw = W, sh = H, sx = 0, sy = 0;
       if (aspect > ca) { sw = H * aspect; sx = -(sw - W) / 2; }
       else             { sh = W / aspect; sy = -(sh - H) / 2; }
       ctx.drawImage(img, sx, sy, sw, sh);
-      ctx.fillStyle = "rgba(0,0,0,0.22)";
+      ctx.fillStyle = "rgba(0,0,0,0.25)";
       ctx.fillRect(0, 0, W, H);
-    } catch { drawGrain(ctx, W, H); }
+    } catch {
+      drawGrain(ctx, W, H);
+    }
   } else {
     drawGrain(ctx, W, H);
   }
   ctx.restore();
 
-  // Shape outline
+  // Subtle shape border
   ctx.save();
   tracePath(ctx, shape, W, H);
-  ctx.strokeStyle = "rgba(255,255,255,0.14)";
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = "rgba(255,255,255,0.15)";
+  ctx.lineWidth = 2;
   ctx.stroke();
   ctx.restore();
 
-  // Text
+  // Draw text
   if (text.trim()) {
     try { await document.fonts.load(`bold ${fontSize}px ${fontFamily}`); } catch { /* fallback */ }
+    // Apply letter spacing via CSS property (supported in modern browsers)
+    const c2 = canvas.getContext("2d")!;
+    if ("letterSpacing" in c2) (c2 as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${letterSpacing}px`;
     ctx.font = `${fontSize}px ${fontFamily}`;
-    if (shape === "oval" || shape === "circle") {
-      const r = shape === "oval" ? H * 0.27 : Math.min(W, H) * 0.27;
-      drawCurvedText(ctx, text, W / 2, H / 2, r, color.fill);
+
+    const isRound = shape === "oval" || shape === "circle";
+    const isCurvedPos = (position === "center" || position === "top" || position === "bottom") && isRound;
+
+    if (isCurvedPos) {
+      const radius = shape === "oval"
+        ? (position === "center" ? H * 0.26 : H * 0.36)
+        : (position === "center" ? Math.min(W, H) * 0.26 : Math.min(W, H) * 0.36);
+      drawCurvedText(ctx, text, W / 2, H / 2, radius, color.fill, color.glow, position);
     } else {
-      drawStraightText(ctx, text, W / 2, H / 2, color.fill, shadowFill);
+      const { x, y, vertical } = getTextXY(position, W, H, shape);
+      drawText(ctx, text, x, y, color.fill, color.glow, vertical);
     }
   }
 }
 
-// ─── Font picker sub-component ─────────────────────────────────────────────
+// ─── Font picker ───────────────────────────────────────────────────────────
 
 function FontPicker({ value, onChange }: { value: string; onChange: (id: string) => void }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery]         = useState("");
   const [openGroup, setOpenGroup] = useState<string>("Popular");
 
-  const popular = FONT_CATALOGUE.filter(f => POPULAR_IDS.includes(f.id));
-
+  const popular  = FONT_CATALOGUE.filter(f => POPULAR_IDS.includes(f.id));
   const filtered = query.trim()
     ? FONT_CATALOGUE.filter(f => f.name.toLowerCase().includes(query.toLowerCase()))
     : null;
 
-  const selected = FONT_CATALOGUE.find(f => f.id === value);
-
   return (
     <div>
-      {/* Selected font display + search */}
       <div className="relative mb-2">
         <input
           type="text"
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder={`Search fonts… (${selected?.name ?? ""})`}
-          className="w-full border border-[#e8e8e5] bg-white px-3 py-2 text-sm outline-none focus:border-[#111111] transition-colors"
+          placeholder="Search fonts…"
+          className="w-full h-10 border border-gray-200 bg-white px-3 text-sm outline-none focus:border-gray-900 transition-colors pr-9 rounded"
         />
         {query && (
           <button onClick={() => setQuery("")}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#111111]">
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         )}
       </div>
-
-      {/* Results */}
-      <div className="border border-[#e8e8e5] bg-white max-h-[260px] overflow-y-auto">
+      <div className="border border-gray-200 rounded bg-white max-h-[220px] overflow-y-auto text-sm">
         {filtered ? (
-          // Search results
           filtered.length === 0
-            ? <p className="text-xs text-[#9ca3af] text-center py-6">No fonts found</p>
-            : filtered.map(f => (
-                <FontRow key={f.id} font={f} selected={f.id === value} onClick={() => { onChange(f.id); setQuery(""); }} />
-              ))
+            ? <p className="text-gray-400 text-center py-5 text-xs">No fonts found</p>
+            : filtered.map(f => <FontRow key={f.id} font={f} selected={f.id === value} onClick={() => { onChange(f.id); setQuery(""); }} />)
         ) : (
-          // Grouped
           <>
-            {/* Popular */}
-            <div>
-              <GroupHeader label="Popular" open={openGroup === "Popular"} onClick={() => setOpenGroup(g => g === "Popular" ? "" : "Popular")} />
-              <AnimatePresence initial={false}>
-                {openGroup === "Popular" && (
-                  <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden">
-                    {popular.map(f => (
-                      <FontRow key={f.id} font={f} selected={f.id === value} onClick={() => onChange(f.id)} />
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <FontGroupSection label="Popular" open={openGroup === "Popular"}
+              onToggle={() => setOpenGroup(g => g === "Popular" ? "" : "Popular")}>
+              {popular.map(f => <FontRow key={f.id} font={f} selected={f.id === value} onClick={() => onChange(f.id)} />)}
+            </FontGroupSection>
             {CATEGORIES.map(cat => (
-              <div key={cat}>
-                <GroupHeader label={cat} open={openGroup === cat} onClick={() => setOpenGroup(g => g === cat ? "" : cat)} />
-                <AnimatePresence initial={false}>
-                  {openGroup === cat && (
-                    <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden">
-                      {FONT_CATALOGUE.filter(f => f.category === cat).map(f => (
-                        <FontRow key={f.id} font={f} selected={f.id === value} onClick={() => onChange(f.id)} />
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <FontGroupSection key={cat} label={cat} open={openGroup === cat}
+                onToggle={() => setOpenGroup(g => g === cat ? "" : cat)}>
+                {FONT_CATALOGUE.filter(f => f.category === cat).map(f =>
+                  <FontRow key={f.id} font={f} selected={f.id === value} onClick={() => onChange(f.id)} />
+                )}
+              </FontGroupSection>
             ))}
           </>
         )}
@@ -318,36 +388,58 @@ function FontPicker({ value, onChange }: { value: string; onChange: (id: string)
   );
 }
 
-function GroupHeader({ label, open, onClick }: { label: string; open: boolean; onClick: () => void }) {
+function FontGroupSection({ label, open, onToggle, children }: {
+  label: string; open: boolean; onToggle: () => void; children: React.ReactNode;
+}) {
   return (
-    <button onClick={onClick}
-      className="w-full flex items-center justify-between px-3 py-2 bg-[#f9f9f7] border-b border-[#f0f0ee] text-left hover:bg-[#f5f5f3] transition-colors">
-      <span className="text-[9px] tracking-[0.35em] uppercase text-[#9ca3af] font-semibold">{label}</span>
-      <motion.svg animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}
-        className="w-3 h-3 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-      </motion.svg>
-    </button>
+    <div>
+      <button onClick={onToggle}
+        className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-100 hover:bg-gray-100 transition-colors">
+        <span className="text-[10px] font-semibold tracking-widest uppercase text-gray-400">{label}</span>
+        <motion.svg animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}
+          className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </motion.svg>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }}
+            transition={{ duration: 0.2 }} className="overflow-hidden">
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
 function FontRow({ font, selected, onClick }: { font: FontDef; selected: boolean; onClick: () => void }) {
   return (
     <button onClick={onClick}
-      className={`w-full flex items-center justify-between px-3 py-2.5 border-b border-[#f5f5f3] last:border-0 text-left transition-colors ${
-        selected ? "bg-[#111111]" : "hover:bg-[#fafaf8]"
+      className={`w-full flex items-center justify-between px-3 py-2.5 border-b border-gray-50 last:border-0 text-left transition-colors ${
+        selected ? "bg-gray-900" : "hover:bg-gray-50"
       }`}>
-      <span style={{ fontFamily: font.family }} className={`text-[17px] truncate max-w-[140px] ${selected ? "text-white" : "text-[#111111]"}`}>
+      <span style={{ fontFamily: font.family }} className={`text-[18px] leading-tight truncate ${selected ? "text-white" : "text-gray-900"}`}>
         {font.name}
       </span>
-      <span className={`text-[10px] shrink-0 ml-2 ${selected ? "text-white/50" : "text-[#9ca3af]"}`}>
+      <span className={`text-[10px] shrink-0 ml-2 tracking-wide ${selected ? "text-white/50" : "text-gray-400"}`}>
         {font.category}
       </span>
     </button>
   );
 }
 
-// ─── Main EngravingPanel component ─────────────────────────────────────────
+// ─── Section label helper ──────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] font-semibold tracking-widest uppercase text-gray-400 mb-3">
+      {children}
+    </p>
+  );
+}
+
+// ─── Main modal component ──────────────────────────────────────────────────
 
 export default function EngravingPanel({
   product,
@@ -358,308 +450,383 @@ export default function EngravingPanel({
   onAddToCart: (data: CustomizationData) => void;
   onClose: () => void;
 }) {
-  const [text, setText]           = useState("");
-  const [fontId, setFontId]       = useState("playfair");
-  const [fontSize, setFontSize]   = useState(32);
-  const [colorId, setColorId]     = useState("natural");
-  const [fileName, setFileName]   = useState("");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [notes, setNotes]         = useState("");
-  const [showFontPicker, setShowFontPicker] = useState(false);
-  const [fontsLoaded, setFontsLoaded]       = useState(false);
+  const [text, setText]                 = useState("");
+  const [fontId, setFontId]             = useState("playfair");
+  const [fontSize, setFontSize]         = useState(34);
+  const [colorId, setColorId]           = useState("natural");
+  const [position, setPosition]         = useState<PositionId>("center");
+  const [letterSpacingIdx, setLSIdx]    = useState(0);
+  const [fileName, setFileName]         = useState("");
+  const [notes, setNotes]               = useState("");
+  const [showFullFontPicker, setShowFFP] = useState(false);
+  const [fontsLoaded, setFontsLoaded]   = useState(false);
 
-  const canvasRef  = useRef<HTMLCanvasElement>(null);
-  const fileRef    = useRef<HTMLInputElement>(null);
-  const shape      = detectShape(product);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileRef   = useRef<HTMLInputElement>(null);
+  const shape     = detectShape(product);
   const selectedFont = FONT_CATALOGUE.find(f => f.id === fontId) ?? FONT_CATALOGUE[0];
+  const letterSpacing = LETTER_SPACING_STEPS[letterSpacingIdx].value;
 
-  // ── Load all Google Fonts once ──────────────────────────────────────────
+  // Lock body scroll while modal open
   useEffect(() => {
-    if (typeof document === "undefined") return;
-    const existing = document.getElementById("engraving-gfonts");
-    if (!existing) {
-      const params = FONT_CATALOGUE.map(f => `family=${f.google}:wght@400;700`).join("&");
-      const link = document.createElement("link");
-      link.id   = "engraving-gfonts";
-      link.rel  = "stylesheet";
-      link.href = `https://fonts.googleapis.com/css2?${params}&display=swap`;
-      link.onload = () => setFontsLoaded(true);
-      document.head.appendChild(link);
-    } else {
-      setFontsLoaded(true);
-    }
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
   }, []);
 
-  // ── Redraw canvas whenever inputs change ────────────────────────────────
+  // Load all Google Fonts once
+  useEffect(() => {
+    if (document.getElementById("engraving-gfonts")) {
+      setFontsLoaded(true);
+      return;
+    }
+    const params = FONT_CATALOGUE.map(f => `family=${f.google}:wght@400;700`).join("&");
+    const link   = Object.assign(document.createElement("link"), {
+      id: "engraving-gfonts", rel: "stylesheet",
+      href: `https://fonts.googleapis.com/css2?${params}&display=swap`,
+    });
+    link.onload = () => setFontsLoaded(true);
+    document.head.appendChild(link);
+  }, []);
+
+  // Redraw canvas on every dependency change
   const redraw = useCallback(async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     await renderToCanvas(canvas, {
-      text,
-      fontFamily: selectedFont.family,
-      fontSize,
-      colorId,
-      shape,
-      productImageSrc: product.image || null,
+      text, fontFamily: selectedFont.family, fontSize, colorId,
+      letterSpacing, position, shape, productImageSrc: product.image || null,
     });
-  }, [text, selectedFont, fontSize, colorId, shape, product.image]);
+  }, [text, selectedFont, fontSize, colorId, letterSpacing, position, shape, product.image]);
 
   useEffect(() => { redraw(); }, [redraw]);
-  // Also redraw once fonts are done loading
   useEffect(() => { if (fontsLoaded) redraw(); }, [fontsLoaded, redraw]);
 
-  // ── Download preview ────────────────────────────────────────────────────
   function downloadPreview() {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const a = document.createElement("a");
-    a.href     = canvas.toDataURL("image/png");
-    a.download = `engraving-preview-${product.id}.png`;
+    const a = Object.assign(document.createElement("a"), {
+      href: canvas.toDataURL("image/png"),
+      download: `engraving-${product.id}.png`,
+    });
     a.click();
   }
 
-  // ── Add to cart ─────────────────────────────────────────────────────────
   function handleAdd() {
     const previewDataUrl = canvasRef.current?.toDataURL("image/png") ?? "";
+    const col = TEXT_COLORS.find(c => c.id === colorId);
     const summary = [
       text ? `"${text.slice(0, 28)}${text.length > 28 ? "…" : ""}"` : null,
-      text ? `· ${selectedFont.name}` : null,
-      colorId !== "natural" ? `· ${TEXT_COLORS.find(c => c.id === colorId)?.label}` : null,
-      fileName ? `· image` : null,
-    ].filter(Boolean).join(" ");
+      text ? selectedFont.name : null,
+      col && colorId !== "natural" ? col.label : null,
+      fileName ? "+ image" : null,
+    ].filter(Boolean).join(" · ");
 
     onAddToCart({
-      fabricJson: JSON.stringify({ text, fontId, fontFamily: selectedFont.family, fontSize, colorId, fileName, notes }),
+      fabricJson: JSON.stringify({ text, fontId, fontFamily: selectedFont.family, fontSize, colorId, letterSpacing, position, fileName, notes }),
       previewDataUrl,
       summary: summary || "Custom engraving",
       productId: product.id,
     });
   }
 
-  const canW = 400, canH = 264;
+  const CW = 600, CH = 420;
 
-  return (
-    <div className="border border-[#e8e8e5] bg-[#fafaf8] mt-1">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e8e8e5] bg-white">
-        <div>
-          <p className="text-[9px] tracking-[0.4em] uppercase text-[#9ca3af] font-semibold">Personalise</p>
-          <p className="text-sm font-medium text-[#111111]">Add Engraving</p>
-        </div>
-        <button onClick={onClose} className="text-[#9ca3af] hover:text-[#111111] transition-colors p-1">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+  const modal = (
+    <AnimatePresence>
+      <motion.div
+        key="engraving-modal"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.22 }}
+        className="fixed inset-0 z-[300] flex items-center justify-center p-4"
+      >
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/65 backdrop-blur-sm"
+          onClick={onClose}
+        />
 
-      <div className="p-5 space-y-5">
-
-        {/* ── Live preview canvas ── */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[9px] tracking-[0.35em] uppercase text-[#9ca3af] font-medium">Preview</p>
-            {text && (
-              <button onClick={downloadPreview}
-                className="flex items-center gap-1 text-[10px] text-[#6b7280] hover:text-[#111111] transition-colors">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Save PNG
-              </button>
-            )}
-          </div>
-          <div className="relative bg-[#111111] overflow-hidden" style={{ borderRadius: 6 }}>
-            <canvas
-              ref={canvasRef}
-              width={canW}
-              height={canH}
-              className="w-full"
-              style={{ display: "block" }}
-            />
-            {!text && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <p className="text-[11px] text-white/25 tracking-[0.2em] uppercase">Type text below to preview</p>
-              </div>
-            )}
-          </div>
-          <p className="text-[10px] text-[#9ca3af] mt-1.5 text-center">
-            This is how your engraving will look
-            {shape === "oval" || shape === "circle" ? " (curved on round products)" : ""}
-          </p>
-        </div>
-
-        {/* ── Text input ── */}
-        <div>
-          <label className="text-[10px] tracking-[0.3em] uppercase text-[#6b7280] block mb-2">
-            Engraving Text
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              value={text}
-              onChange={e => setText(e.target.value.slice(0, 40))}
-              placeholder="Name, date, or short quote…"
-              autoFocus
-              className="w-full border border-[#e8e8e5] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#111111] transition-colors pr-12"
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#9ca3af] tabular-nums">
-              {text.length}/40
-            </span>
-          </div>
-        </div>
-
-        {/* ── Font picker ── */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-[10px] tracking-[0.3em] uppercase text-[#6b7280]">Font</label>
-            <button
-              onClick={() => setShowFontPicker(p => !p)}
-              className="text-[10px] text-[#6b7280] hover:text-[#111111] flex items-center gap-1 transition-colors"
-            >
-              {showFontPicker ? "Close" : "Browse all"}
-              <motion.svg animate={{ rotate: showFontPicker ? 180 : 0 }} transition={{ duration: 0.2 }}
-                className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </motion.svg>
-            </button>
-          </div>
-
-          {/* Quick popular row */}
-          {!showFontPicker && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-              {FONT_CATALOGUE.filter(f => POPULAR_IDS.includes(f.id)).map(f => (
-                <button key={f.id} onClick={() => setFontId(f.id)}
-                  className={`px-3 py-2.5 border text-left transition-all ${
-                    fontId === f.id ? "border-[#111111] bg-[#111111] text-white" : "border-[#e8e8e5] bg-white hover:border-[#111111]"
-                  }`}>
-                  <span style={{ fontFamily: f.family }} className="block text-[18px] leading-tight mb-0.5">Aa</span>
-                  <span className={`text-[9px] tracking-wide ${fontId === f.id ? "text-white/60" : "text-[#9ca3af]"}`}>{f.name}</span>
-                </button>
-              ))}
+        {/* Panel */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.97, y: 8 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          className="relative bg-white w-full max-w-[940px] max-h-[92vh] flex flex-col rounded-xl overflow-hidden shadow-2xl"
+          onClick={e => e.stopPropagation()}
+        >
+          {/* ── Header ── */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+            <div>
+              <p className="text-[10px] font-semibold tracking-widest uppercase text-gray-400 mb-0.5">
+                Personalise
+              </p>
+              <h2 className="text-lg font-semibold text-gray-900 leading-none">Add Engraving</h2>
             </div>
-          )}
-
-          {/* Full picker */}
-          <AnimatePresence initial={false}>
-            {showFontPicker && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
-                <FontPicker value={fontId} onChange={id => { setFontId(id); setShowFontPicker(false); }} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Currently selected font display */}
-          {!showFontPicker && (
-            <p className="mt-1.5 text-[10px] text-[#9ca3af]">
-              Selected: <span style={{ fontFamily: selectedFont.family }} className="text-[#111111] text-[13px]">{selectedFont.name}</span>
-            </p>
-          )}
-        </div>
-
-        {/* ── Font size ── */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-[10px] tracking-[0.3em] uppercase text-[#6b7280]">Font Size</label>
-            <span className="text-[11px] font-medium text-[#111111] tabular-nums">{fontSize}px</span>
-          </div>
-          <input
-            type="range"
-            min={16}
-            max={56}
-            step={2}
-            value={fontSize}
-            onChange={e => setFontSize(Number(e.target.value))}
-            className="w-full accent-[#111111]"
-          />
-          <div className="flex justify-between text-[9px] text-[#9ca3af] mt-0.5">
-            <span>Small</span><span>Large</span>
-          </div>
-        </div>
-
-        {/* ── Text colour ── */}
-        <div>
-          <label className="text-[10px] tracking-[0.3em] uppercase text-[#6b7280] block mb-2">Text Colour</label>
-          <div className="flex gap-2 flex-wrap">
-            {TEXT_COLORS.map(c => (
-              <button key={c.id} onClick={() => setColorId(c.id)} title={c.label}
-                className={`flex flex-col items-center gap-1 group`}>
-                <div className={`w-8 h-8 rounded-full border-2 transition-all ${
-                  colorId === c.id ? "border-[#111111] scale-110" : "border-[#e8e8e5] hover:border-[#999]"
-                }`} style={{ background: c.swatch, boxShadow: colorId === c.id ? "0 0 0 2px white, 0 0 0 3px #111" : undefined }} />
-                <span className={`text-[9px] tracking-wide ${colorId === c.id ? "text-[#111111] font-semibold" : "text-[#9ca3af]"}`}>
-                  {c.label}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Image upload ── */}
-        <div>
-          <label className="text-[10px] tracking-[0.3em] uppercase text-[#6b7280] block mb-2">
-            Reference Image <span className="normal-case tracking-normal font-normal text-[#9ca3af]">(optional)</span>
-          </label>
-          <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden"
-            onChange={e => {
-              const f = e.target.files?.[0] ?? null;
-              setUploadedFile(f);
-              setFileName(f?.name ?? "");
-            }} />
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={() => fileRef.current?.click()}
-              className="border border-[#e8e8e5] bg-white px-3 py-2 text-xs text-[#6b7280] hover:border-[#111111] hover:text-[#111111] transition-all">
-              Choose File
+            <button
+              onClick={onClose}
+              className="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
-            {fileName
-              ? <span className="text-xs text-[#111111] truncate max-w-[160px]">{fileName}</span>
-              : <span className="text-xs text-[#9ca3af]">No file chosen</span>}
-            {fileName && (
-              <button onClick={() => { setUploadedFile(null); setFileName(""); }} className="text-[#ef4444] text-xs hover:underline">
-                Remove
-              </button>
-            )}
           </div>
-        </div>
 
-        {/* ── Notes ── */}
-        <div>
-          <label className="text-[10px] tracking-[0.3em] uppercase text-[#6b7280] block mb-2">
-            Special Notes <span className="normal-case tracking-normal font-normal text-[#9ca3af]">(optional)</span>
-          </label>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            rows={2}
-            placeholder="Any specific requests for our craftspeople…"
-            className="w-full border border-[#e8e8e5] bg-white px-3 py-2 text-sm outline-none focus:border-[#111111] transition-colors resize-none"
-          />
-        </div>
+          {/* ── Body (two columns) ── */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="flex flex-col md:flex-row min-h-0">
 
-        {/* ── Actions ── */}
-        <div className="flex gap-2 pt-1">
-          <button onClick={handleAdd}
-            className="flex-1 bg-[#111111] text-white text-[11px] tracking-[0.15em] uppercase font-semibold py-3.5 hover:bg-[#222] transition-colors flex items-center justify-center gap-2">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-            Add to Cart
-          </button>
-          <button onClick={downloadPreview} disabled={!text}
-            title="Download preview"
-            className="border border-[#e8e8e5] px-3.5 text-[#6b7280] hover:border-[#111111] hover:text-[#111111] transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-          </button>
-          <button onClick={onClose}
-            className="border border-[#e8e8e5] px-4 text-[#6b7280] text-xs hover:border-[#111111] hover:text-[#111111] transition-colors">
-            Cancel
-          </button>
-        </div>
+              {/* ── LEFT: Preview ── */}
+              <div className="md:w-1/2 bg-gray-950 flex flex-col items-center justify-center p-6 gap-4 shrink-0">
+                <div className="w-full">
+                  <p className="text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-3 text-center">
+                    Your Engraving Preview
+                  </p>
+                  <div className="relative rounded-lg overflow-hidden bg-black w-full">
+                    <canvas
+                      ref={canvasRef}
+                      width={CW}
+                      height={CH}
+                      className="w-full block"
+                    />
+                    {!text && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <p className="text-[11px] text-white/30 tracking-widest uppercase text-center px-8">
+                          Type text on the right<br />to see your engraving
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-500 mt-2 text-center">
+                    {shape === "oval" || shape === "circle"
+                      ? "Text curves to follow the shape of your product"
+                      : "Text will be engraved exactly as shown above"}
+                  </p>
+                </div>
 
-      </div>
-    </div>
+                {/* Download button */}
+                <button
+                  onClick={downloadPreview}
+                  disabled={!text}
+                  className="flex items-center gap-2 px-4 py-2 border border-white/20 text-white/60 hover:text-white hover:border-white/50 text-[11px] tracking-widest uppercase transition-colors disabled:opacity-30 disabled:cursor-not-allowed rounded"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Save Preview PNG
+                </button>
+              </div>
+
+              {/* ── RIGHT: Controls ── */}
+              <div className="md:w-1/2 overflow-y-auto p-6 space-y-6">
+
+                {/* Engraving text */}
+                <div>
+                  <SectionLabel>Engraving Text</SectionLabel>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={text}
+                      onChange={e => setText(e.target.value.slice(0, 40))}
+                      placeholder="Name, date, or short quote…"
+                      autoFocus
+                      className="w-full h-12 border border-gray-200 bg-white px-4 text-sm outline-none focus:border-gray-900 transition-colors pr-14 rounded"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 tabular-nums">
+                      {text.length}/40
+                    </span>
+                  </div>
+                </div>
+
+                {/* Font */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <SectionLabel>Font</SectionLabel>
+                    <button
+                      onClick={() => setShowFFP(p => !p)}
+                      className="text-[10px] text-gray-500 hover:text-gray-900 flex items-center gap-1 transition-colors -mt-3"
+                    >
+                      {showFullFontPicker ? "Close picker" : "Browse all fonts"}
+                      <motion.svg animate={{ rotate: showFullFontPicker ? 180 : 0 }} transition={{ duration: 0.18 }}
+                        className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </motion.svg>
+                    </button>
+                  </div>
+
+                  {/* Popular grid */}
+                  {!showFullFontPicker && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {FONT_CATALOGUE.filter(f => POPULAR_IDS.includes(f.id)).map(f => (
+                        <button key={f.id} onClick={() => setFontId(f.id)}
+                          className={`min-h-[76px] px-3 py-3 border-2 text-left rounded transition-all flex flex-col justify-between ${
+                            fontId === f.id
+                              ? "border-gray-900 bg-gray-900 text-white"
+                              : "border-gray-200 bg-white hover:border-gray-400"
+                          }`}>
+                          <span style={{ fontFamily: f.family }} className={`block text-[22px] leading-tight ${fontId === f.id ? "text-white" : "text-gray-900"}`}>
+                            Aa
+                          </span>
+                          <span className={`text-[9px] tracking-wide leading-tight mt-1 ${fontId === f.id ? "text-white/60" : "text-gray-400"}`}>
+                            {f.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Full picker (searchable) */}
+                  <AnimatePresence initial={false}>
+                    {showFullFontPicker && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} className="overflow-hidden">
+                        <FontPicker value={fontId} onChange={id => { setFontId(id); setShowFFP(false); }} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {!showFullFontPicker && (
+                    <p className="mt-2 text-[11px] text-gray-400">
+                      Selected: <span style={{ fontFamily: selectedFont.family }} className="text-gray-900 text-[14px]">{selectedFont.name}</span>
+                    </p>
+                  )}
+                </div>
+
+                {/* Font size */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <SectionLabel>Font Size</SectionLabel>
+                    <span className="text-[11px] font-semibold text-gray-900 tabular-nums -mt-3">{fontSize}px</span>
+                  </div>
+                  <input type="range" min={14} max={60} step={2} value={fontSize}
+                    onChange={e => setFontSize(Number(e.target.value))}
+                    className="w-full accent-gray-900" />
+                  <div className="flex justify-between text-[9px] text-gray-400 mt-1">
+                    <span>Small</span><span>Large</span>
+                  </div>
+                </div>
+
+                {/* Letter spacing */}
+                <div>
+                  <SectionLabel>Letter Spacing</SectionLabel>
+                  <div className="grid grid-cols-4 gap-2">
+                    {LETTER_SPACING_STEPS.map((s, i) => (
+                      <button key={s.label} onClick={() => setLSIdx(i)}
+                        className={`py-2.5 border-2 text-center text-[11px] font-medium rounded transition-all ${
+                          letterSpacingIdx === i
+                            ? "border-gray-900 bg-gray-900 text-white"
+                            : "border-gray-200 text-gray-600 hover:border-gray-400"
+                        }`}>
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Text colour */}
+                <div>
+                  <SectionLabel>Text Colour</SectionLabel>
+                  <div className="flex gap-3 flex-wrap">
+                    {TEXT_COLORS.map(c => (
+                      <button key={c.id} onClick={() => setColorId(c.id)} title={c.label}
+                        className="flex flex-col items-center gap-1.5 group">
+                        <div
+                          className={`w-9 h-9 rounded-full border-2 transition-all ${
+                            colorId === c.id
+                              ? "border-gray-900 scale-110 shadow-lg"
+                              : "border-gray-200 group-hover:border-gray-400"
+                          }`}
+                          style={{
+                            background: c.swatch,
+                            outline: colorId === c.id ? "2px solid white" : "none",
+                            outlineOffset: "-3px",
+                          }}
+                        />
+                        <span className={`text-[9px] tracking-wide ${colorId === c.id ? "text-gray-900 font-semibold" : "text-gray-400"}`}>
+                          {c.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Text position */}
+                <div>
+                  <SectionLabel>Text Position</SectionLabel>
+                  <div className="flex gap-2 flex-wrap">
+                    {POSITIONS.map(p => (
+                      <button key={p.id} onClick={() => setPosition(p.id)} title={p.label}
+                        className={`flex flex-col items-center gap-1.5 px-3 py-2.5 border-2 rounded transition-all min-w-[52px] ${
+                          position === p.id
+                            ? "border-gray-900 bg-gray-900 text-white"
+                            : "border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-900"
+                        }`}>
+                        {p.icon}
+                        <span className="text-[9px] tracking-wide">{p.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Image upload */}
+                <div>
+                  <SectionLabel>Reference Image <span className="normal-case tracking-normal font-normal text-gray-400">(optional)</span></SectionLabel>
+                  <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden"
+                    onChange={e => {
+                      const f = e.target.files?.[0] ?? null;
+                      setFileName(f?.name ?? "");
+                    }} />
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => fileRef.current?.click()}
+                      className="h-10 border border-gray-200 bg-white px-4 text-xs text-gray-500 hover:border-gray-900 hover:text-gray-900 transition-all rounded">
+                      Choose File
+                    </button>
+                    {fileName
+                      ? <span className="text-xs text-gray-900 truncate max-w-[180px]">{fileName}</span>
+                      : <span className="text-xs text-gray-400">No file chosen</span>}
+                    {fileName && (
+                      <button onClick={() => setFileName("")}
+                        className="text-red-400 text-xs hover:text-red-600 hover:underline">Remove</button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <SectionLabel>Special Notes <span className="normal-case tracking-normal font-normal text-gray-400">(optional)</span></SectionLabel>
+                  <textarea
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                    rows={2}
+                    placeholder="Any specific requests for our craftspeople…"
+                    className="w-full border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-gray-900 transition-colors resize-none rounded"
+                  />
+                </div>
+
+                {/* Add to cart */}
+                <button
+                  onClick={handleAdd}
+                  className="w-full h-14 bg-gray-900 text-white text-[12px] tracking-[0.18em] uppercase font-semibold hover:bg-black transition-colors flex items-center justify-center gap-2 rounded"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  Add to Cart with Engraving
+                </button>
+
+                <p className="text-[10px] text-gray-400 text-center -mt-2 pb-2">
+                  Our craftspeople will engrave exactly as shown in the preview above.
+                </p>
+
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
+
+  return createPortal(modal, document.body);
 }
