@@ -42,11 +42,11 @@ const CATEGORIES  = ["Serif", "Sans-serif", "Script", "Decorative", "Monospace"]
 // ─── Text colours ──────────────────────────────────────────────────────────
 
 const TEXT_COLORS = [
-  { id: "natural", label: "Natural",  fill: "#2c0f00", glow: "rgba(140,80,20,0.5)",  swatch: "linear-gradient(135deg,#9b6c45,#5c3318)" },
-  { id: "black",   label: "Black",    fill: "#111111", glow: "rgba(0,0,0,0.7)",       swatch: "#111" },
-  { id: "gold",    label: "Gold",     fill: "#d4a017", glow: "rgba(212,160,23,0.7)",  swatch: "linear-gradient(135deg,#f5d060,#c89b0a)" },
-  { id: "silver",  label: "Silver",   fill: "#d0d0d0", glow: "rgba(200,200,200,0.6)", swatch: "linear-gradient(135deg,#f0f0f0,#9e9e9e)" },
-  { id: "white",   label: "White",    fill: "#ffffff", glow: "rgba(255,255,255,0.5)", swatch: "#fff" },
+  { id: "natural", label: "Natural",  fill: "#2c0f00", glow: "rgba(140,80,20,0.6)",  swatch: "linear-gradient(135deg,#9b6c45,#5c3318)" },
+  { id: "black",   label: "Black",    fill: "#111111", glow: "rgba(0,0,0,0.8)",       swatch: "#111" },
+  { id: "gold",    label: "Gold",     fill: "#d4a017", glow: "rgba(212,160,23,0.8)",  swatch: "linear-gradient(135deg,#f5d060,#c89b0a)" },
+  { id: "silver",  label: "Silver",   fill: "#e0e0e0", glow: "rgba(220,220,220,0.7)", swatch: "linear-gradient(135deg,#f0f0f0,#9e9e9e)" },
+  { id: "white",   label: "White",    fill: "#ffffff", glow: "rgba(255,255,255,0.6)", swatch: "#fff" },
 ];
 
 // ─── Text position ─────────────────────────────────────────────────────────
@@ -101,15 +101,6 @@ const POSITIONS: { id: PositionId; label: string; icon: React.ReactNode }[] = [
   },
 ];
 
-// ─── Letter spacing steps ──────────────────────────────────────────────────
-
-const LETTER_SPACING_STEPS = [
-  { label: "Normal", value: 0 },
-  { label: "Wide",   value: 3 },
-  { label: "Wider",  value: 6 },
-  { label: "Widest", value: 12 },
-];
-
 // ─── Shape detection ───────────────────────────────────────────────────────
 
 type ShapeId = "oval" | "circle" | "rect" | "tag";
@@ -122,7 +113,12 @@ function detectShape(product: Product): ShapeId {
   return "rect";
 }
 
-// ─── Canvas primitives ─────────────────────────────────────────────────────
+/** Bowls & round shapes default to bottom rim engraving */
+function getDefaultPosition(shape: ShapeId): PositionId {
+  return shape === "oval" || shape === "circle" ? "bottom" : "center";
+}
+
+// ─── Canvas helpers ────────────────────────────────────────────────────────
 
 function drawGrain(ctx: CanvasRenderingContext2D, W: number, H: number) {
   ctx.fillStyle = "#c49a6c";
@@ -183,68 +179,129 @@ function tracePath(ctx: CanvasRenderingContext2D, shape: ShapeId, W: number, H: 
   }
 }
 
-function getTextXY(pos: PositionId, W: number, H: number, shape: ShapeId): { x: number; y: number; vertical: boolean } {
-  const isRound = shape === "oval" || shape === "circle";
-  switch (pos) {
-    case "top":    return { x: W / 2, y: isRound ? H * 0.18 : H * 0.22, vertical: false };
-    case "bottom": return { x: W / 2, y: isRound ? H * 0.82 : H * 0.78, vertical: false };
-    case "left":   return { x: isRound ? W * 0.18 : W * 0.22, y: H / 2, vertical: true  };
-    case "right":  return { x: isRound ? W * 0.82 : W * 0.78, y: H / 2, vertical: true  };
-    default:       return { x: W / 2, y: H / 2, vertical: false };
-  }
-}
-
+/**
+ * Draw text curved along the top or bottom arc of an ellipse/circle.
+ * Characters are placed one by one around the arc so they follow the curve naturally.
+ */
 function drawCurvedText(
-  ctx: CanvasRenderingContext2D, text: string,
-  cx: number, cy: number, radius: number, fill: string, glow: string,
-  pos: PositionId,
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  cx: number,
+  cy: number,
+  rx: number,   // horizontal radius
+  ry: number,   // vertical radius
+  fill: string,
+  glow: string,
+  pos: "top" | "bottom" | "center",
+  letterSpacingPx: number,
 ) {
-  if (!text) return;
-  // bottom arc flips the curve
-  const flip   = pos === "bottom" ? 1 : -1;
-  const span   = Math.min((text.length * 0.65) / radius, 1.2) * Math.PI;
-  const startA = -Math.PI / 2 * flip - span / 2;
+  if (!text.trim()) return;
+
+  // Measure each character width (use average for simplicity)
+  const charWidths = text.split("").map(ch => ctx.measureText(ch).width + letterSpacingPx);
+  const totalWidth = charWidths.reduce((a, b) => a + b, 0) - letterSpacingPx;
+
+  // For bottom: arc centre is below shape centre, text reads left→right along bottom rim
+  // For top / center: arc along top rim
+  const isBottom = pos === "bottom";
+
+  // Use a radius that sits ON the rim (just inside the edge)
+  const useRx = rx * 0.88;
+  const useRy = ry * 0.88;
+
+  // Arc span in radians proportional to text width vs circumference at that radius
+  const avgR = (useRx + useRy) / 2;
+  const arcSpan = Math.min((totalWidth / avgR) * 1.05, Math.PI * 1.3);
+
+  // Starting angle: for bottom, we go from left of the bottom arc to right
+  // π/2 = straight down; for top, -π/2 = straight up
+  const midAngle = isBottom ? Math.PI / 2 : -Math.PI / 2;
+  let curAngle   = midAngle - arcSpan / 2;
+
   ctx.save();
-  ctx.shadowColor = glow;
-  ctx.shadowBlur  = 10;
   ctx.fillStyle   = fill;
+  ctx.shadowColor = glow;
+  ctx.shadowBlur  = 14;
   ctx.textAlign   = "center";
   ctx.textBaseline = "middle";
+
   for (let i = 0; i < text.length; i++) {
-    const a = startA + (i / Math.max(text.length - 1, 1)) * span;
+    const charAngle = curAngle + (charWidths[i] - letterSpacingPx) / 2 / avgR;
+    const x = cx + useRx * Math.cos(charAngle);
+    const y = cy + useRy * Math.sin(charAngle);
+
+    // Rotation: tangent to ellipse at this angle
+    // For bottom arc, rotate so baseline faces away from centre (outward)
+    const rotation = isBottom
+      ? charAngle + Math.PI / 2   // baseline points outward (down)
+      : charAngle - Math.PI / 2;  // baseline points outward (up)
+
     ctx.save();
-    ctx.translate(cx + radius * Math.cos(a) * flip, cy + radius * Math.sin(a) * flip * -1);
-    ctx.rotate(a * flip + Math.PI * (flip === 1 ? 1.5 : 0.5));
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+
+    // Stroke for contrast
+    ctx.lineWidth   = 3;
+    ctx.strokeStyle = isBottom ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.45)";
+    ctx.strokeText(text[i], 0, 0);
     ctx.fillText(text[i], 0, 0);
     ctx.restore();
+
+    curAngle += charWidths[i] / avgR;
   }
+
   ctx.restore();
 }
 
+/**
+ * Draw straight text (center / left / right positions, or flat products).
+ * Uses a drop shadow + thin stroke for readability on any background.
+ */
 function drawText(
-  ctx: CanvasRenderingContext2D, text: string,
-  x: number, y: number,
-  fill: string, glow: string,
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  fill: string,
+  glow: string,
   vertical: boolean,
 ) {
-  if (!text) return;
+  if (!text.trim()) return;
   ctx.save();
   ctx.fillStyle    = fill;
   ctx.textAlign    = "center";
   ctx.textBaseline = "middle";
   ctx.shadowColor  = glow;
-  ctx.shadowBlur   = 12;
-  ctx.shadowOffsetX = 1;
-  ctx.shadowOffsetY = 1;
+  ctx.shadowBlur   = 16;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 2;
 
   if (vertical) {
     ctx.translate(x, y);
     ctx.rotate(-Math.PI / 2);
+    ctx.lineWidth   = 4;
+    ctx.strokeStyle = "rgba(0,0,0,0.5)";
+    ctx.strokeText(text, 0, 0);
     ctx.fillText(text, 0, 0);
   } else {
+    ctx.lineWidth   = 4;
+    ctx.strokeStyle = "rgba(0,0,0,0.5)";
+    ctx.strokeText(text, x, y);
     ctx.fillText(text, x, y);
   }
   ctx.restore();
+}
+
+/** Straight-text position for non-round shapes or left/right positions */
+function getTextXY(pos: PositionId, W: number, H: number, shape: ShapeId): { x: number; y: number; vertical: boolean } {
+  const isRound = shape === "oval" || shape === "circle";
+  switch (pos) {
+    case "top":    return { x: W / 2, y: isRound ? H * 0.20 : H * 0.22, vertical: false };
+    case "bottom": return { x: W / 2, y: isRound ? H * 0.80 : H * 0.78, vertical: false };
+    case "left":   return { x: isRound ? W * 0.18 : W * 0.20, y: H / 2, vertical: true  };
+    case "right":  return { x: isRound ? W * 0.82 : W * 0.80, y: H / 2, vertical: true  };
+    default:       return { x: W / 2, y: H / 2, vertical: false };
+  }
 }
 
 async function renderToCanvas(
@@ -254,24 +311,25 @@ async function renderToCanvas(
     fontFamily: string;
     fontSize: number;
     colorId: string;
-    letterSpacing: number;
+    letterSpacingEm: number;
     position: PositionId;
     shape: ShapeId;
     productImageSrc: string | null;
   },
 ) {
-  const { text, fontFamily, fontSize, colorId, letterSpacing, position, shape, productImageSrc } = opts;
+  const { text, fontFamily, fontSize, colorId, letterSpacingEm, position, shape, productImageSrc } = opts;
   const W = canvas.width, H = canvas.height;
   const ctx = canvas.getContext("2d")!;
   const color = TEXT_COLORS.find(c => c.id === colorId) ?? TEXT_COLORS[0];
+  const letterSpacingPx = Math.round(letterSpacingEm * fontSize);
 
   ctx.clearRect(0, 0, W, H);
 
-  // Dark canvas surround
+  // Dark surround
   ctx.fillStyle = "#0e0e0e";
   ctx.fillRect(0, 0, W, H);
 
-  // Clipped shape with product image or wood grain
+  // Clip to shape, draw product image or wood grain
   ctx.save();
   tracePath(ctx, shape, W, H);
   ctx.clip();
@@ -291,7 +349,8 @@ async function renderToCanvas(
       if (aspect > ca) { sw = H * aspect; sx = -(sw - W) / 2; }
       else             { sh = W / aspect; sy = -(sh - H) / 2; }
       ctx.drawImage(img, sx, sy, sw, sh);
-      ctx.fillStyle = "rgba(0,0,0,0.25)";
+      // Slight darkening so text always pops
+      ctx.fillStyle = "rgba(0,0,0,0.28)";
       ctx.fillRect(0, 0, W, H);
     } catch {
       drawGrain(ctx, W, H);
@@ -301,10 +360,10 @@ async function renderToCanvas(
   }
   ctx.restore();
 
-  // Subtle shape border
+  // Shape border
   ctx.save();
   tracePath(ctx, shape, W, H);
-  ctx.strokeStyle = "rgba(255,255,255,0.15)";
+  ctx.strokeStyle = "rgba(255,255,255,0.18)";
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.restore();
@@ -312,19 +371,23 @@ async function renderToCanvas(
   // Draw text
   if (text.trim()) {
     try { await document.fonts.load(`bold ${fontSize}px ${fontFamily}`); } catch { /* fallback */ }
-    // Apply letter spacing via CSS property (supported in modern browsers)
+
+    // Apply letterSpacing via canvas API where available
     const c2 = canvas.getContext("2d")!;
-    if ("letterSpacing" in c2) (c2 as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${letterSpacing}px`;
+    if ("letterSpacing" in c2) {
+      (c2 as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${letterSpacingPx}px`;
+    }
     ctx.font = `${fontSize}px ${fontFamily}`;
 
-    const isRound = shape === "oval" || shape === "circle";
-    const isCurvedPos = (position === "center" || position === "top" || position === "bottom") && isRound;
+    const isRound   = shape === "oval" || shape === "circle";
+    const isCurved  = isRound && (position === "top" || position === "bottom" || position === "center");
+    const curvedPos = (position === "left" || position === "right") ? "center" : position as "top" | "bottom" | "center";
 
-    if (isCurvedPos) {
-      const radius = shape === "oval"
-        ? (position === "center" ? H * 0.26 : H * 0.36)
-        : (position === "center" ? Math.min(W, H) * 0.26 : Math.min(W, H) * 0.36);
-      drawCurvedText(ctx, text, W / 2, H / 2, radius, color.fill, color.glow, position);
+    if (isCurved) {
+      // Ellipse radii for the shape (same proportions as tracePath)
+      const rx = shape === "oval"   ? W * 0.44 : Math.min(W, H) * 0.41;
+      const ry = shape === "oval"   ? H * 0.41 : Math.min(W, H) * 0.41;
+      drawCurvedText(ctx, text, W / 2, H / 2, rx, ry, color.fill, color.glow, curvedPos, letterSpacingPx);
     } else {
       const { x, y, vertical } = getTextXY(position, W, H, shape);
       drawText(ctx, text, x, y, color.fill, color.glow, vertical);
@@ -429,8 +492,6 @@ function FontRow({ font, selected, onClick }: { font: FontDef; selected: boolean
   );
 }
 
-// ─── Section label helper ──────────────────────────────────────────────────
-
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-[10px] font-semibold tracking-widest uppercase text-gray-400 mb-3">
@@ -450,22 +511,22 @@ export default function EngravingPanel({
   onAddToCart: (data: CustomizationData) => void;
   onClose: () => void;
 }) {
-  const [text, setText]                 = useState("");
-  const [fontId, setFontId]             = useState("playfair");
-  const [fontSize, setFontSize]         = useState(34);
-  const [colorId, setColorId]           = useState("natural");
-  const [position, setPosition]         = useState<PositionId>("center");
-  const [letterSpacingIdx, setLSIdx]    = useState(0);
-  const [fileName, setFileName]         = useState("");
-  const [notes, setNotes]               = useState("");
-  const [showFullFontPicker, setShowFFP] = useState(false);
-  const [fontsLoaded, setFontsLoaded]   = useState(false);
+  const shape = detectShape(product);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileRef   = useRef<HTMLInputElement>(null);
-  const shape     = detectShape(product);
+  const [text, setText]                   = useState("");
+  const [fontId, setFontId]               = useState("playfair");
+  const [fontSize, setFontSize]           = useState(38);
+  const [colorId, setColorId]             = useState("natural");
+  const [position, setPosition]           = useState<PositionId>(getDefaultPosition(shape));
+  const [letterSpacingEm, setLetterSpacingEm] = useState(0.05);
+  const [fileName, setFileName]           = useState("");
+  const [notes, setNotes]                 = useState("");
+  const [showFullFontPicker, setShowFFP]  = useState(false);
+  const [fontsLoaded, setFontsLoaded]     = useState(false);
+
+  const canvasRef    = useRef<HTMLCanvasElement>(null);
+  const fileRef      = useRef<HTMLInputElement>(null);
   const selectedFont = FONT_CATALOGUE.find(f => f.id === fontId) ?? FONT_CATALOGUE[0];
-  const letterSpacing = LETTER_SPACING_STEPS[letterSpacingIdx].value;
 
   // Lock body scroll while modal open
   useEffect(() => {
@@ -494,9 +555,9 @@ export default function EngravingPanel({
     if (!canvas) return;
     await renderToCanvas(canvas, {
       text, fontFamily: selectedFont.family, fontSize, colorId,
-      letterSpacing, position, shape, productImageSrc: product.image || null,
+      letterSpacingEm, position, shape, productImageSrc: product.image || null,
     });
-  }, [text, selectedFont, fontSize, colorId, letterSpacing, position, shape, product.image]);
+  }, [text, selectedFont, fontSize, colorId, letterSpacingEm, position, shape, product.image]);
 
   useEffect(() => { redraw(); }, [redraw]);
   useEffect(() => { if (fontsLoaded) redraw(); }, [fontsLoaded, redraw]);
@@ -513,7 +574,7 @@ export default function EngravingPanel({
 
   function handleAdd() {
     const previewDataUrl = canvasRef.current?.toDataURL("image/png") ?? "";
-    const col = TEXT_COLORS.find(c => c.id === colorId);
+    const col     = TEXT_COLORS.find(c => c.id === colorId);
     const summary = [
       text ? `"${text.slice(0, 28)}${text.length > 28 ? "…" : ""}"` : null,
       text ? selectedFont.name : null,
@@ -522,14 +583,17 @@ export default function EngravingPanel({
     ].filter(Boolean).join(" · ");
 
     onAddToCart({
-      fabricJson: JSON.stringify({ text, fontId, fontFamily: selectedFont.family, fontSize, colorId, letterSpacing, position, fileName, notes }),
+      fabricJson: JSON.stringify({ text, fontId, fontFamily: selectedFont.family, fontSize, colorId, letterSpacingEm, position, fileName, notes }),
       previewDataUrl,
       summary: summary || "Custom engraving",
       productId: product.id,
     });
   }
 
-  const CW = 600, CH = 420;
+  // Canvas internal resolution — close to display size so fonts feel right
+  const CW = 560, CH = 380;
+
+  const lsPercent = Math.round(((letterSpacingEm - (-0.05)) / (0.30 - (-0.05))) * 100);
 
   const modal = (
     <AnimatePresence>
@@ -594,14 +658,14 @@ export default function EngravingPanel({
                     {!text && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <p className="text-[11px] text-white/30 tracking-widest uppercase text-center px-8">
-                          Type text on the right<br />to see your engraving
+                          Type your text on the right<br />to see your engraving
                         </p>
                       </div>
                     )}
                   </div>
                   <p className="text-[10px] text-gray-500 mt-2 text-center">
                     {shape === "oval" || shape === "circle"
-                      ? "Text curves to follow the shape of your product"
+                      ? "Text curves along the outer rim of your product"
                       : "Text will be engraved exactly as shown above"}
                   </p>
                 </div>
@@ -700,7 +764,7 @@ export default function EngravingPanel({
                     <SectionLabel>Font Size</SectionLabel>
                     <span className="text-[11px] font-semibold text-gray-900 tabular-nums -mt-3">{fontSize}px</span>
                   </div>
-                  <input type="range" min={14} max={60} step={2} value={fontSize}
+                  <input type="range" min={24} max={72} step={2} value={fontSize}
                     onChange={e => setFontSize(Number(e.target.value))}
                     className="w-full accent-gray-900" />
                   <div className="flex justify-between text-[9px] text-gray-400 mt-1">
@@ -710,18 +774,27 @@ export default function EngravingPanel({
 
                 {/* Letter spacing */}
                 <div>
-                  <SectionLabel>Letter Spacing</SectionLabel>
-                  <div className="grid grid-cols-4 gap-2">
-                    {LETTER_SPACING_STEPS.map((s, i) => (
-                      <button key={s.label} onClick={() => setLSIdx(i)}
-                        className={`py-2.5 border-2 text-center text-[11px] font-medium rounded transition-all ${
-                          letterSpacingIdx === i
-                            ? "border-gray-900 bg-gray-900 text-white"
-                            : "border-gray-200 text-gray-600 hover:border-gray-400"
-                        }`}>
-                        {s.label}
-                      </button>
-                    ))}
+                  <div className="flex items-center justify-between mb-3">
+                    <SectionLabel>Letter Spacing</SectionLabel>
+                    <span className="text-[11px] font-semibold text-gray-900 tabular-nums -mt-3">
+                      {letterSpacingEm === 0 ? "0" : letterSpacingEm > 0 ? `+${letterSpacingEm.toFixed(2)}` : letterSpacingEm.toFixed(2)}em
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={-5}
+                    max={30}
+                    step={1}
+                    value={lsPercent}
+                    onChange={e => {
+                      const pct = Number(e.target.value) / 100;
+                      const val = -0.05 + pct * (0.30 - (-0.05));
+                      setLetterSpacingEm(Math.round(val * 100) / 100);
+                    }}
+                    className="w-full accent-gray-900"
+                  />
+                  <div className="flex justify-between text-[9px] text-gray-400 mt-1">
+                    <span>Tight</span><span>Normal</span><span>Wide</span>
                   </div>
                 </div>
 
@@ -768,6 +841,11 @@ export default function EngravingPanel({
                       </button>
                     ))}
                   </div>
+                  {(shape === "oval" || shape === "circle") && (
+                    <p className="mt-2 text-[10px] text-gray-400">
+                      Top, Centre, and Bottom positions curve the text along the rim.
+                    </p>
+                  )}
                 </div>
 
                 {/* Image upload */}
