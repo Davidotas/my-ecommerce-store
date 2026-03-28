@@ -25,6 +25,7 @@ const CATEGORY_IMAGES = [
 
 const navLinks = [
   { label: "New Arrivals", href: "/" },
+  { label: "Customise", href: "/customize" },
   { label: "About", href: "/about" },
 ];
 
@@ -296,6 +297,7 @@ export default function Navbar({ categories, settings }: Props) {
                   { label: "New Arrivals", href: "/" },
                   { label: "All Products", href: "/shop" },
                   ...categories.map((c) => ({ label: c.name, href: `/shop?categories=${c.slug}` })),
+                  { label: "Customise", href: "/customize" },
                   { label: "About", href: "/about" },
                   { label: "Contact", href: "/contact" },
                 ].map((link, i) => (

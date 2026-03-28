@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -247,7 +246,8 @@ interface SceneRefs {
   renderer:  THREE.WebGLRenderer;
   scene:     THREE.Scene;
   camera:    THREE.PerspectiveCamera;
-  controls:  OrbitControls;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  controls:  any;
   mesh:      THREE.Mesh;
   material:  THREE.MeshStandardMaterial;
   texture:   THREE.CanvasTexture | null;
@@ -267,6 +267,7 @@ export default function ProductViewer3D({
   const mountRef     = useRef<HTMLDivElement>(null);
   const sceneRef     = useRef<SceneRefs | null>(null);
   const uploadImgRef = useRef<HTMLImageElement | null>(null);
+  const cleanupRef   = useRef<(() => void) | null>(null);
 
   const [showHint, setShowHint] = useState(true);
   const [ready, setReady]       = useState(false);
@@ -299,8 +300,13 @@ export default function ProductViewer3D({
 
   // ── Scene initialisation (once) ────────────────────────────────────────────
   useEffect(() => {
+    let cancelled = false;
     const el = mountRef.current;
     if (!el) return;
+
+    (async () => {
+    const { OrbitControls } = await import("three/examples/jsm/controls/OrbitControls.js");
+    if (cancelled || !mountRef.current) return;
 
     const w = el.clientWidth  || 400;
     const h = el.clientHeight || 400;
@@ -412,7 +418,7 @@ export default function ProductViewer3D({
     sceneRef.current = { renderer, scene, camera, controls, mesh, material: mat, texture: null, rafId };
     setReady(true);
 
-    return () => {
+    cleanupRef.current = () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", onResize);
       renderer.domElement.removeEventListener("pointerdown", stopAuto);
@@ -423,6 +429,13 @@ export default function ProductViewer3D({
       renderer.dispose();
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
       sceneRef.current = null;
+    };
+    })();
+
+    return () => {
+      cancelled = true;
+      cleanupRef.current?.();
+      cleanupRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
