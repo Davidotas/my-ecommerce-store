@@ -200,7 +200,12 @@ export default function CheckoutClient({ userId, userEmail, profile }: Props) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Something went wrong");
+        setError(data.error || "Something went wrong. Please try again.");
+        setLoading(false);
+        return;
+      }
+      if (!data.url) {
+        setError("No payment URL returned. Please try again.");
         setLoading(false);
         return;
       }

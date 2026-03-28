@@ -4,8 +4,6 @@ import { supabase } from "@/lib/supabase";
 import { createAdminClient } from "@/lib/supabase";
 import { fromDb, DbProduct } from "@/lib/products";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
 function generateTrackingId(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "";
@@ -16,6 +14,18 @@ function generateTrackingId(): string {
 }
 
 export async function POST(req: NextRequest) {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json({ error: "Payment processing is not configured. Please contact support." }, { status: 503 });
+  }
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+  // Resolve base URL from request host so Stripe redirects work on any domain
+  const host    = req.headers.get("host") ?? "localhost:3000";
+  const proto   = host.startsWith("localhost") ? "http" : "https";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
+    ? process.env.NEXT_PUBLIC_APP_URL
+    : `${proto}://${host}`;
+
   const { items, userId, userEmail, shippingAddress, paymentMethod } = await req.json();
 
   if (!items || items.length === 0) {
@@ -98,15 +108,26 @@ export async function POST(req: NextRequest) {
     orderId = order?.id ?? null;
   }
 
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    line_items: lineItems,
-    mode: "payment",
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}${orderId ? `&order_id=${orderId}` : ""}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
-    customer_email: userEmail || undefined,
-    metadata: { order_id: orderId ?? "", user_id: userId ?? "" },
-  });
+  let session;
+  try {
+    session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      mode: "payment",
+      success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}${orderId ? `&order_id=${orderId}` : ""}`,
+      cancel_url: `${baseUrl}/cart`,
+      customer_email: userEmail || undefined,
+      metadata: { order_id: orderId ?? "", user_id: userId ?? "" },
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("Stripe session creation failed:", msg);
+    return NextResponse.json({ error: `Payment session failed: ${msg}` }, { status: 500 });
+  }
+
+  if (!session.url) {
+    return NextResponse.json({ error: "No redirect URL returned from payment provider." }, { status: 500 });
+  }
 
   return NextResponse.json({ url: session.url });
 }
