@@ -8,7 +8,7 @@ import NewArrivalsGrid from "@/components/NewArrivalsGrid";
 import EditorialBanner from "@/components/EditorialBanner";
 import Newsletter from "@/components/Newsletter";
 import TrustStrip from "@/components/TrustStrip";
-import CollectionBanner from "@/components/CollectionBanner";
+import CollectionBanner, { CollectionBannerSection } from "@/components/CollectionBanner";
 import Footer from "@/components/Footer";
 import CategoryFilter from "@/components/CategoryFilter";
 import EditorialProductGrid from "@/components/EditorialProductGrid";
@@ -75,6 +75,61 @@ export default async function HomePage({
     .limit(8);
   const newArrivals = (newArrivalsRaw ?? []).map((p) => fromDb(p as DbProduct));
 
+  // Build CollectionBanner sections — one per category (up to 4), each with a real product
+  const bannerCategories = categories.slice(0, 4);
+  const BANNER_IMAGES = [
+    "https://images.unsplash.com/photo-1544457070-4cd773b4d71e?w=1400&q=85",
+    "https://images.unsplash.com/photo-1585412727339-54e4bae3bbf9?w=1400&q=85",
+    "https://images.unsplash.com/photo-1604578762246-41134e37f9cc?w=1400&q=85",
+    "https://images.unsplash.com/photo-1567225591450-06036b3392a6?w=1400&q=85",
+  ];
+
+  // Fetch one product per banner category in parallel
+  const bannerProductResults = await Promise.all(
+    bannerCategories.map((cat) =>
+      supabase
+        .from("products")
+        .select("*, categories(id, name, slug)")
+        .eq("category_id", cat.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    )
+  );
+
+  const collectionSections: CollectionBannerSection[] = bannerCategories.length > 0
+    ? bannerCategories.map((cat, i) => ({
+        label: "Collection",
+        title: cat.name.toUpperCase(),
+        href: `/shop?categories=${cat.slug}`,
+        buttonText: `Shop ${cat.name}`,
+        image: (cat as Category & { image_url?: string }).image_url || BANNER_IMAGES[i % BANNER_IMAGES.length],
+        imageLeft: i % 2 === 0,
+        product: bannerProductResults[i]?.data
+          ? fromDb(bannerProductResults[i].data as DbProduct)
+          : newArrivals[i] ?? newArrivals[0],
+      }))
+    : [
+        {
+          label: "For the Kitchen",
+          title: "KITCHEN\nCOLLECTION",
+          href: "/shop",
+          buttonText: "Shop Kitchen",
+          image: BANNER_IMAGES[0],
+          imageLeft: true,
+          product: newArrivals[0],
+        },
+        {
+          label: "For the Home",
+          title: "WALL ART &\nSCULPTURES",
+          href: "/shop",
+          buttonText: "Shop Wall Art",
+          image: BANNER_IMAGES[1],
+          imageLeft: false,
+          product: newArrivals[1] ?? newArrivals[0],
+        },
+      ];
+
   const isFiltered = !!categorySlug;
 
   // If builder home has sections, render them dynamically
@@ -117,7 +172,7 @@ export default async function HomePage({
       {!isFiltered && <NewArrivalsGrid products={newArrivals} />}
 
       {/* 5. Collection split banners */}
-      {!isFiltered && <CollectionBanner products={newArrivals} />}
+      {!isFiltered && <CollectionBanner sections={collectionSections} />}
 
       {/* 6. Editorial Banner */}
       {!isFiltered && <EditorialBanner />}

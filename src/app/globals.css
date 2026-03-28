@@ -64,30 +64,75 @@ h3, h4, h5, h6 {
   color:      var(--fg);
 }
 
+/* ── Cross-browser fixes ────────────────────────────────────────────────────── */
+
+/* Flexbox gap fallback for older Safari (<14.1) */
+@supports not (gap: 1px) {
+  .flex > * + * { margin-left: 0.5rem; }
+}
+
+/* Smooth scrolling — Safari needs webkit prefix for older versions */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar cross-browser */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Backdrop blur — Safari needs -webkit prefix */
+.backdrop-blur-xl {
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+}
+
+/* Image rendering smoothing */
+img {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
 /* ── Marquee ────────────────────────────────────────────────────────────────── */
+@-webkit-keyframes marquee {
+  from { -webkit-transform: translateX(0); transform: translateX(0); }
+  to   { -webkit-transform: translateX(-50%); transform: translateX(-50%); }
+}
 @keyframes marquee {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
 
 .animate-marquee {
-  animation:   marquee 28s linear infinite;
-  will-change: transform;
+  -webkit-animation: marquee 28s linear infinite;
+  animation:         marquee 28s linear infinite;
+  will-change:       transform;
 }
 
 .animate-marquee:hover {
-  animation-play-state: paused;
+  -webkit-animation-play-state: paused;
+  animation-play-state:         paused;
 }
 
 /* ── Ken Burns ─────────────────────────────────────────────────────────────── */
+@-webkit-keyframes kenBurns {
+  from { -webkit-transform: scale(1); transform: scale(1); }
+  to   { -webkit-transform: scale(1.06); transform: scale(1.06); }
+}
 @keyframes kenBurns {
   from { transform: scale(1); }
   to   { transform: scale(1.06); }
 }
 
 .ken-burns {
-  animation: kenBurns 9s ease-out forwards;
-  will-change: transform;
+  -webkit-animation: kenBurns 9s ease-out forwards;
+  animation:         kenBurns 9s ease-out forwards;
+  will-change:       transform;
 }
 
 /* ── Nav underline hover ───────────────────────────────────────────────────── */

@@ -29,6 +29,14 @@ const navLinks = [
   { label: "About", href: "/about" },
 ];
 
+const mobileMenuLinks = [
+  { label: "New Arrivals", href: "/" },
+  { label: "All Products", href: "/shop" },
+  { label: "Customise", href: "/customize" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
+];
+
 export default function Navbar({ categories, settings }: Props) {
   const { totalItems, lastAdded } = useCart();
   const { count: wishlistCount } = useWishlist();
@@ -72,6 +80,11 @@ export default function Navbar({ categories, settings }: Props) {
 
   const storeName = settings?.store_name || "Mykolo";
 
+  const allMobileLinks = [
+    ...mobileMenuLinks,
+    ...categories.map((c) => ({ label: c.name, href: `/shop?categories=${c.slug}` })),
+  ];
+
   return (
     <>
       <motion.header
@@ -85,9 +98,9 @@ export default function Navbar({ categories, settings }: Props) {
         }`}
       >
         <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-12">
-          <div className="flex items-center justify-between h-[68px]">
+          <div className="relative flex items-center h-[68px]">
 
-            {/* Left nav */}
+            {/* ── DESKTOP: Left nav ── */}
             <div className="hidden lg:flex items-center gap-8 min-w-[200px]">
               {navLinks.map((l) => (
                 <Link
@@ -109,18 +122,62 @@ export default function Navbar({ categories, settings }: Props) {
               </div>
             </div>
 
-            {/* Logo */}
+            {/* ── MOBILE: Left side — hamburger + wishlist ── */}
+            <div className="flex lg:hidden items-center gap-1">
+              {/* Hamburger */}
+              <motion.button
+                whileTap={{ scale: 0.92 }}
+                className="flex items-center justify-center w-10 h-10 text-[#6b7280] hover:text-[#111111] transition-colors"
+                onClick={() => setMobileOpen(true)}
+                aria-label="Open menu"
+              >
+                <span className="flex flex-col gap-[5px] w-[18px]">
+                  <span className="block h-px w-full bg-current" />
+                  <span className="block h-px w-full bg-current" />
+                  <span className="block h-px w-3/4 bg-current" />
+                </span>
+              </motion.button>
+
+              {/* Wishlist */}
+              <motion.div whileTap={{ scale: 0.92 }}>
+                <Link
+                  href="/wishlist"
+                  className="relative flex items-center justify-center w-10 h-10 text-[#6b7280] hover:text-[#111111] transition-colors duration-200"
+                  aria-label="Wishlist"
+                >
+                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  {wishlistCount > 0 && (
+                    <motion.span
+                      key={wishlistCount}
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#111111] text-white text-[9px] font-bold flex items-center justify-center rounded-full"
+                    >
+                      {wishlistCount}
+                    </motion.span>
+                  )}
+                </Link>
+              </motion.div>
+            </div>
+
+            {/* ── Logo — centered absolutely ── */}
             <div className="absolute left-1/2 -translate-x-1/2">
               <Link href="/">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={settings?.logo_url || "/mykolo-logo.png"} alt={storeName} style={{ height: "40px", width: "auto" }} />
+                <img
+                  src={settings?.logo_url || "/mykolo-logo.png"}
+                  alt={storeName}
+                  style={{ height: "40px", width: "auto" }}
+                />
               </Link>
             </div>
 
-            {/* Right icons */}
-            <div className="flex items-center gap-2 min-w-[200px] justify-end">
+            {/* ── DESKTOP: Right icons ── */}
+            <div className="hidden lg:flex items-center gap-2 ml-auto">
               {/* Currency */}
-              <div className="relative hidden sm:block">
+              <div className="relative">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   onClick={() => setCurrencyOpen((p) => !p)}
@@ -197,24 +254,47 @@ export default function Navbar({ categories, settings }: Props) {
                   )}
                 </Link>
               </motion.div>
-
-              {/* Hamburger */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                className="lg:hidden flex items-center justify-center w-9 h-9 text-[#6b7280] hover:text-[#111111] transition-colors"
-                onClick={() => setMobileOpen((p) => !p)} aria-label="Menu">
-                <span className="flex flex-col gap-[5px] w-4">
-                  <motion.span animate={mobileOpen ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }} className="block h-px w-full bg-current" />
-                  <motion.span animate={mobileOpen ? { opacity: 0 } : { opacity: 1 }} className="block h-px w-full bg-current" />
-                  <motion.span animate={mobileOpen ? { rotate: -45, y: -7 } : { rotate: 0, y: 0 }} className="block h-px w-full bg-current" />
-                </span>
-              </motion.button>
             </div>
+
+            {/* ── MOBILE: Right side — search + cart ── */}
+            <div className="flex lg:hidden items-center gap-1 ml-auto">
+              {/* Search */}
+              <motion.button
+                whileTap={{ scale: 0.92 }}
+                onClick={() => setSearchOpen(true)}
+                className="flex items-center justify-center w-10 h-10 text-[#6b7280] hover:text-[#111111] transition-colors duration-200"
+                aria-label="Search"
+              >
+                <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </motion.button>
+
+              {/* Cart */}
+              <motion.div
+                whileTap={{ scale: 0.92 }}
+                animate={cartBounce ? { scale: [1, 1.35, 0.85, 1.15, 1], rotate: [-8, 8, -4, 0] } : {}}
+                transition={cartBounce ? { duration: 0.55, ease: "easeInOut" } : {}}
+              >
+                <Link href="/cart" className="relative flex items-center justify-center w-10 h-10 text-[#6b7280] hover:text-[#111111] transition-colors duration-200" aria-label="Cart">
+                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  {totalItems > 0 && (
+                    <motion.span key={totalItems} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                      className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#111111] text-white text-[9px] font-bold flex items-center justify-center rounded-full">
+                      {totalItems}
+                    </motion.span>
+                  )}
+                </Link>
+              </motion.div>
+            </div>
+
           </div>
         </div>
       </motion.header>
 
-      {/* Mega Menu */}
+      {/* ── Mega Menu (desktop) ── */}
       <AnimatePresence>
         {shopOpen && (
           <motion.div
@@ -271,63 +351,107 @@ export default function Navbar({ categories, settings }: Props) {
         )}
       </AnimatePresence>
 
-      {/* Search overlay */}
+      {/* ── Search overlay ── */}
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
 
-      {/* Mobile menu */}
+      {/* ── Mobile menu: dark full-screen slide from left ── */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-40 bg-white pt-[68px] flex flex-col">
-            <div className="flex-1 overflow-y-auto px-6 py-8">
-              {/* Mobile search bar */}
-              <button
-                onClick={() => { setMobileOpen(false); setSearchOpen(true); }}
-                className="flex items-center gap-3 w-full border border-[#e8e8e5] px-4 py-3 text-sm text-[#9ca3af] mb-6 hover:border-[#111111] transition-colors"
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 z-[60] bg-black/50 lg:hidden"
+              onClick={() => setMobileOpen(false)}
+            />
+
+            {/* Slide panel */}
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+              className="fixed inset-y-0 left-0 z-[70] w-full max-w-[340px] bg-[#111111] flex flex-col lg:hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0">
+                <Link href="/" onClick={() => setMobileOpen(false)}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={settings?.logo_url || "/mykolo-logo.png"}
+                    alt={storeName}
+                    style={{ height: "32px", width: "auto", filter: "brightness(0) invert(1)" }}
+                  />
+                </Link>
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center w-10 h-10 text-white/60 hover:text-white transition-colors"
+                  aria-label="Close menu"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px bg-white/10 mx-6 mb-6" />
+
+              {/* Nav links */}
+              <nav className="flex-1 overflow-y-auto px-6">
+                <ul className="space-y-1">
+                  {allMobileLinks.map((link, i) => (
+                    <motion.li
+                      key={link.label + i}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: 0.05 + i * 0.045 }}
+                    >
+                      <Link
+                        href={link.href}
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-between py-4 border-b border-white/8 text-[26px] font-light tracking-tight text-white/80 hover:text-white transition-colors group"
+                      >
+                        {link.label}
+                        <svg className="w-4 h-4 text-white/20 group-hover:text-white/60 group-hover:translate-x-1 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
+                    </motion.li>
+                  ))}
+                </ul>
+              </nav>
+
+              {/* Footer area */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.35, duration: 0.3 }}
+                className="px-6 py-6 border-t border-white/10 shrink-0"
               >
-                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                Search products…
-              </button>
-              <p className="text-[9px] tracking-[0.4em] uppercase text-[#9ca3af] mb-5">Menu</p>
-              <ul>
-                {[
-                  { label: "New Arrivals", href: "/" },
-                  { label: "All Products", href: "/shop" },
-                  ...categories.map((c) => ({ label: c.name, href: `/shop?categories=${c.slug}` })),
-                  { label: "Customise", href: "/customize" },
-                  { label: "About", href: "/about" },
-                  { label: "Contact", href: "/contact" },
-                ].map((link, i) => (
-                  <motion.li key={link.label + i}
-                    initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.28, delay: i * 0.04 }}>
-                    <Link href={link.href} onClick={() => setMobileOpen(false)}
-                      className="flex items-center justify-between py-4 border-b border-[#f5f5f3] text-2xl text-[#111111] hover:text-[#6b7280] transition-colors">
-                      {link.label}
-                      <svg className="w-4 h-4 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  </motion.li>
-                ))}
-              </ul>
-              <div className="mt-10">
-                <p className="text-[9px] tracking-[0.4em] uppercase text-[#9ca3af] mb-4">Currency</p>
-                <div className="grid grid-cols-4 gap-2">
+                <p className="text-[9px] tracking-[0.4em] uppercase text-white/30 mb-3">Currency</p>
+                <div className="flex flex-wrap gap-2">
                   {(Object.values(CURRENCIES) as typeof CURRENCIES[CurrencyCode][]).map((c) => (
-                    <button key={c.code} onClick={() => setCurrency(c.code)}
-                      className={`flex flex-col items-center gap-1 py-2.5 border text-[10px] font-medium transition-all ${currency === c.code ? "border-[#111111] bg-[#111111] text-white" : "border-[#e8e8e5] text-[#6b7280] hover:border-[#d1d5db]"}`}>
-                      <span className="text-base">{c.flag}</span>
+                    <button
+                      key={c.code}
+                      onClick={() => setCurrency(c.code)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 border text-[10px] font-medium transition-all ${
+                        currency === c.code
+                          ? "border-white bg-white text-[#111111]"
+                          : "border-white/20 text-white/50 hover:border-white/50 hover:text-white/80"
+                      }`}
+                    >
+                      <span>{c.flag}</span>
                       <span>{c.code}</span>
                     </button>
                   ))}
                 </div>
-              </div>
-            </div>
-          </motion.div>
+              </motion.div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>
