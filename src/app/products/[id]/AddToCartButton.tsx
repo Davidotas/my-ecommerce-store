@@ -1,16 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+// AnimatePresence kept for cart state transitions
 import { Product } from "@/lib/products";
-import { useCart, type CustomizationData } from "@/context/CartContext";
+import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-
-const ProductCustomizer = dynamic(
-  () => import("@/components/ProductCustomizer"),
-  { ssr: false }
-);
 
 type State = "idle" | "loading" | "added";
 
@@ -21,10 +17,9 @@ export default function AddToCartButton({
   product: Product;
   quantity?: number;
 }) {
-  const { addItem, addCustomizedItem } = useCart();
+  const { addItem } = useCart();
   const { toggle, has } = useWishlist();
   const [state, setState] = useState<State>("idle");
-  const [customizerOpen, setCustomizerOpen] = useState(false);
   const wished = has(product.id);
   const outOfStock = product.stock === 0;
 
@@ -42,12 +37,6 @@ export default function AddToCartButton({
       addItem(product, quantity);
       setState("added");
     }, 480);
-  }
-
-  function handleCustomizerAdd(customization: CustomizationData) {
-    addCustomizedItem(product, customization);
-    setState("added");
-    setTimeout(() => setState("idle"), 2200);
   }
 
   return (
@@ -128,10 +117,8 @@ export default function AddToCartButton({
 
       {/* Customise button */}
       {!outOfStock && (
-        <motion.button
-          onClick={() => setCustomizerOpen(true)}
-          whileHover={{ scale: 1.005 }}
-          whileTap={{ scale: 0.99 }}
+        <Link
+          href={`/customize?product=${product.id}`}
           className="w-full border border-[#e8e8e5] text-[#111111] text-[12px] tracking-[0.12em] uppercase font-medium py-[13px] flex items-center justify-center gap-2 hover:border-[#111111] transition-colors duration-200"
         >
           <svg
@@ -148,30 +135,8 @@ export default function AddToCartButton({
             />
           </svg>
           Customise This Product
-        </motion.button>
+        </Link>
       )}
-
-      {/* Customiser overlay */}
-      <AnimatePresence>
-        {customizerOpen && (
-          <motion.div
-            key="customizer"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            <ProductCustomizer
-              product={product}
-              onClose={() => setCustomizerOpen(false)}
-              onAddToCart={(customization) => {
-                handleCustomizerAdd(customization);
-                setCustomizerOpen(false);
-              }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 }

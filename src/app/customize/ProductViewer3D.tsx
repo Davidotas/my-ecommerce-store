@@ -133,13 +133,20 @@ function createGeometry(productType: string): THREE.BufferGeometry {
   switch (productType) {
     case "Bowl": {
       const pts: THREE.Vector2[] = [];
-      for (let i = 0; i <= 22; i++) {
-        const t = i / 22;
-        const r = Math.pow(t, 0.7) * 1.15;
-        const y = -Math.pow(t, 1.6) * 0.85 + 0.05;
+      // Wide shallow salad bowl: centre-bottom sweeps outward and upward to rim
+      pts.push(new THREE.Vector2(0.0,  -0.48)); // bottom centre
+      pts.push(new THREE.Vector2(0.12, -0.48)); // small flat base
+      for (let i = 1; i <= 22; i++) {
+        const t  = i / 22;
+        const a  = t * Math.PI * 0.5;           // 0 → 90°
+        const r  = 0.12 + Math.sin(a) * 1.38;  // 0.12 → 1.50
+        const y  = -0.48 + (1 - Math.cos(a)) * 0.68; // -0.48 → 0.20
         pts.push(new THREE.Vector2(r, y));
       }
-      return new THREE.LatheGeometry(pts, 56);
+      // Rim lip
+      pts.push(new THREE.Vector2(1.52, 0.22));
+      pts.push(new THREE.Vector2(1.50, 0.24));
+      return new THREE.LatheGeometry(pts, 64);
     }
     case "Plate": {
       const geo = new THREE.CylinderGeometry(1.45, 1.35, 0.14, 56);

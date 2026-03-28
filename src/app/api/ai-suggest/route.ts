@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
 export async function POST(req: NextRequest) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: "AI not configured — ANTHROPIC_API_KEY missing" }, { status: 503 });
+  }
+
   const { productType, occasion } = await req.json();
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: "AI not configured" }, { status: 503 });
-  }
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
     const message = await client.messages.create({
@@ -37,16 +37,16 @@ Suggest the ideal design options. Reply ONLY with a valid JSON object — no mar
 
     const text = message.content[0].type === "text" ? message.content[0].text : "";
 
-    // Extract JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return NextResponse.json({ error: "Invalid AI response" }, { status: 500 });
+      return NextResponse.json({ error: "AI returned an unexpected format" }, { status: 500 });
     }
 
     const data = JSON.parse(jsonMatch[0]);
     return NextResponse.json(data);
   } catch (err) {
-    console.error("AI suggest error:", err);
-    return NextResponse.json({ error: "AI request failed" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("AI suggest error:", msg);
+    return NextResponse.json({ error: `AI request failed: ${msg}` }, { status: 500 });
   }
 }

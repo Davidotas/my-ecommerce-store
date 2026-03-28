@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -221,12 +221,13 @@ const TOTAL_STEPS = 10;
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function CustomizerClient() {
+export default function CustomizerClient({ productId }: { productId?: string }) {
   const router = useRouter();
   const { addCustomizedItem } = useCart();
 
   const [step, setStep]                   = useState(1);
   const [sel, setSel]                     = useState<Selections>(DEFAULT);
+  const [refImage, setRefImage]           = useState<string | null>(null);
   const [quickMode, setQuickMode]         = useState(false);
   const [inspirationOpen, setInspirationOpen] = useState(false);
   const [aiLoading, setAiLoading]         = useState(false);
@@ -234,6 +235,15 @@ export default function CustomizerClient() {
   const [added, setAdded]                 = useState(false);
   const [uploadedFile, setUploadedFile]   = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Load product image as reference if coming from a product page
+  useEffect(() => {
+    if (!productId) return;
+    fetch(`/api/product-image?id=${productId}`)
+      .then(r => r.json())
+      .then(d => { if (d.image) setRefImage(d.image); })
+      .catch(() => {/* ignore */});
+  }, [productId]);
 
   const steps = quickMode ? QUICK_STEPS : Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1);
   const stepIdx = steps.indexOf(step);
@@ -276,8 +286,11 @@ export default function CustomizerClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productType: sel.productType, occasion: sel.occasion }),
       });
-      if (!res.ok) throw new Error("Failed");
       const data = await res.json();
+      if (!res.ok) {
+        setAiError(data.error || "AI suggestion failed.");
+        return;
+      }
       setSel(prev => ({
         ...prev,
         shape:         data.shape         ?? prev.shape,
@@ -287,8 +300,8 @@ export default function CustomizerClient() {
         patternStyle:  data.patternStyle  ?? prev.patternStyle,
         colour:        data.colour        ?? prev.colour,
       }));
-    } catch {
-      setAiError("AI suggestion failed. Please try again.");
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "AI suggestion failed.");
     } finally {
       setAiLoading(false);
     }
@@ -744,10 +757,10 @@ export default function CustomizerClient() {
   // ─── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen">
+    <div className="flex flex-col lg:flex-row min-h-screen pt-[68px]">
 
       {/* ── Left: 3D Viewer ── */}
-      <div className="h-[260px] sm:h-[340px] lg:h-screen lg:w-[45%] lg:sticky lg:top-0 flex-shrink-0">
+      <div className="h-[260px] sm:h-[340px] lg:h-[calc(100vh-68px)] lg:w-[45%] lg:sticky lg:top-[68px] flex-shrink-0 relative">
         <ProductViewer3D
           productType={sel.productType}
           wood={sel.wood}
@@ -756,10 +769,20 @@ export default function CustomizerClient() {
           engravingText={sel.engravingText}
           uploadedFile={uploadedFile}
         />
+        {/* Reference product image badge */}
+        {refImage && (
+          <div className="absolute bottom-3 left-3 z-10">
+            <div className="flex items-center gap-2 bg-black/60 backdrop-blur-sm px-2 py-1.5 rounded text-[10px] text-white/70">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={refImage} alt="Reference" className="w-7 h-7 object-cover rounded" />
+              Based on selected product
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Right: Customizer ── */}
-      <div className="flex-1 lg:w-[55%] lg:h-screen lg:overflow-y-auto flex flex-col bg-[#fafaf8]">
+      <div className="flex-1 lg:w-[55%] lg:h-[calc(100vh-68px)] lg:overflow-y-auto flex flex-col bg-[#fafaf8]">
 
       {/* ── Sticky header ── */}
       <div className="bg-white border-b border-[#e8e8e5] sticky top-0 z-20">

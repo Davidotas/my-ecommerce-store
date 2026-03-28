@@ -5,6 +5,11 @@ export const metadata = {
   description: "Create a bespoke handcrafted wood product tailored exactly to you.",
 };
 
-export default function CustomizePage() {
-  return <CustomizerClient />;
+export default async function CustomizePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ product?: string }>;
+}) {
+  const { product: productId } = await searchParams;
+  return <CustomizerClient productId={productId} />;
 }
