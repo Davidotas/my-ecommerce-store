@@ -23,6 +23,8 @@ function RegisterContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -50,6 +52,20 @@ function RegisterContent() {
     }
   }
 
+  async function handleResend() {
+    setResendLoading(true);
+    setResendMessage("");
+    const { error: resendError } = await supabaseBrowser.auth.resend({
+      type: "signup",
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(redirect)}`,
+      },
+    });
+    setResendLoading(false);
+    setResendMessage(resendError ? resendError.message : "Confirmation email resent — check your inbox and spam folder.");
+  }
+
   async function handleGoogle() {
     await supabaseBrowser.auth.signInWithOAuth({
       provider: "google",
@@ -63,11 +79,39 @@ function RegisterContent() {
     return (
       <div className="min-h-screen bg-white pt-[68px] flex items-center justify-center px-4">
         <div className="w-full max-w-sm text-center">
-          <div className="w-12 h-12 bg-[#d2ff1f] flex items-center justify-center mx-auto mb-6 text-xl">✓</div>
+          <div className="w-12 h-12 bg-[#d2ff1f] flex items-center justify-center mx-auto mb-6 text-2xl">✉</div>
           <h1 className="text-2xl text-[#111111] mb-3">Check your email</h1>
-          <p className="text-sm text-[#6b7280] leading-relaxed mb-8">
-            We sent a confirmation link to <strong className="text-[#111111]">{email}</strong>. Click it to activate your account.
+          <p className="text-sm text-[#6b7280] leading-relaxed mb-4">
+            We sent a confirmation link to{" "}
+            <strong className="text-[#111111]">{email}</strong>.
+            Click it to activate your account.
           </p>
+
+          {/* Spam warning */}
+          <div className="bg-[#fffbeb] border border-[#fde68a] rounded px-4 py-3 mb-6 text-left">
+            <p className="text-xs font-semibold text-[#92400e] mb-1">Can&apos;t find the email?</p>
+            <ul className="text-xs text-[#92400e] space-y-1 list-disc list-inside">
+              <li>Check your <strong>spam / junk folder</strong></li>
+              <li>Check your <strong>promotions</strong> tab if you use Gmail</li>
+              <li>The email comes from Supabase — it may take 1–2 minutes</li>
+            </ul>
+          </div>
+
+          {/* Resend button */}
+          <button
+            onClick={handleResend}
+            disabled={resendLoading}
+            className="w-full border border-[#e5e7eb] text-sm text-[#374151] py-3 hover:bg-[#f9fafb] disabled:opacity-50 transition-colors mb-3"
+          >
+            {resendLoading ? "Sending…" : "Resend confirmation email"}
+          </button>
+
+          {resendMessage && (
+            <p className={`text-xs mb-4 ${resendMessage.includes("resent") ? "text-green-600" : "text-[#ef4444]"}`}>
+              {resendMessage}
+            </p>
+          )}
+
           <Link href="/account/login" className="text-sm text-[#111111] underline underline-offset-2">
             Back to sign in
           </Link>
