@@ -1,18 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product } from "@/lib/products";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 
-const FONTS = [
-  { id: "serif",     label: "Classic Serif",   style: { fontFamily: "Georgia, serif" } },
-  { id: "sans",      label: "Modern Sans",      style: { fontFamily: "Helvetica, Arial, sans-serif" } },
-  { id: "script",    label: "Elegant Script",   style: { fontFamily: "Palatino Linotype, Palatino, serif", fontStyle: "italic" as const } },
-  { id: "mono",      label: "Typewriter",       style: { fontFamily: "Courier New, Courier, monospace" } },
-];
+const EngravingPanel = dynamic(() => import("./EngravingPanel"), { ssr: false });
 
 type State = "idle" | "loading" | "added";
 
@@ -25,14 +21,8 @@ export default function AddToCartButton({
 }) {
   const { addItem, addCustomizedItem } = useCart();
   const { toggle, has } = useWishlist();
-  const [state, setState]               = useState<State>("idle");
-  const [panelOpen, setPanelOpen]       = useState(false);
-  const [engraving, setEngraving]       = useState("");
-  const [font, setFont]                 = useState(FONTS[0].id);
-  const [fileName, setFileName]         = useState("");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [notes, setNotes]               = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [state, setState]         = useState<State>("idle");
+  const [panelOpen, setPanelOpen] = useState(false);
 
   const wished     = has(product.id);
   const outOfStock = product.stock === 0;
@@ -53,32 +43,9 @@ export default function AddToCartButton({
     }, 480);
   }
 
-  function handleEngravingAdd() {
-    if (!engraving.trim() && !fileName && !notes.trim()) {
-      handleAdd();
-      return;
-    }
-    const selectedFont = FONTS.find(f => f.id === font) ?? FONTS[0];
-    const summary = [
-      engraving ? `"${engraving.slice(0, 30)}"` : null,
-      engraving ? `(${selectedFont.label})` : null,
-      fileName ? "+ image" : null,
-    ].filter(Boolean).join(" ");
-
-    addCustomizedItem(product, {
-      fabricJson: JSON.stringify({ engraving, font, fileName, notes }),
-      previewDataUrl: "",
-      summary: summary || "Custom engraving",
-      productId: product.id,
-    });
-    setState("added");
-    setPanelOpen(false);
-    setTimeout(() => setState("idle"), 2200);
-  }
-
   return (
     <>
-      {/* Row: Add to cart + wishlist */}
+      {/* ── Add to cart + wishlist ── */}
       <div className="flex gap-2.5 mb-3">
         <motion.button
           onClick={handleAdd}
@@ -104,21 +71,13 @@ export default function AddToCartButton({
           )}
           <AnimatePresence mode="wait">
             {outOfStock ? (
-              <motion.span key="oos" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                Out of Stock
-              </motion.span>
+              <motion.span key="oos" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>Out of Stock</motion.span>
             ) : state === "loading" ? (
-              <motion.span key="loading" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                Adding…
-              </motion.span>
+              <motion.span key="loading" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>Adding…</motion.span>
             ) : state === "added" ? (
-              <motion.span key="added" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                Added to Cart ✓
-              </motion.span>
+              <motion.span key="added" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>Added to Cart ✓</motion.span>
             ) : (
-              <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                Add to Cart
-              </motion.span>
+              <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>Add to Cart</motion.span>
             )}
           </AnimatePresence>
         </motion.button>
@@ -130,9 +89,7 @@ export default function AddToCartButton({
           whileTap={{ scale: 0.94 }}
           aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
           className={`w-[52px] flex-shrink-0 border flex items-center justify-center transition-all duration-200 ${
-            wished
-              ? "border-[#111111] bg-[#111111] text-white"
-              : "border-[#e8e8e5] text-[#6b7280] hover:border-[#111111] hover:text-[#111111]"
+            wished ? "border-[#111111] bg-[#111111] text-white" : "border-[#e8e8e5] text-[#6b7280] hover:border-[#111111] hover:text-[#111111]"
           }`}
         >
           <svg style={{ width: "18px", height: "18px" }} fill={wished ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -172,127 +129,26 @@ export default function AddToCartButton({
         </div>
       )}
 
-      {/* ── Simple engraving panel (slide down) ── */}
+      {/* ── Engraving panel (lazy loaded) ── */}
       <AnimatePresence initial={false}>
         {panelOpen && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <div className="border border-[#e8e8e5] bg-[#fafaf8] p-5 mt-1 space-y-4">
-              <p className="text-[9px] tracking-[0.4em] uppercase text-[#9ca3af] font-medium">Personalise This Product</p>
-
-              {/* Engraving text */}
-              <div>
-                <label className="text-[10px] tracking-[0.25em] uppercase text-[#6b7280] block mb-2">
-                  Engraving Text <span className="normal-case tracking-normal font-normal text-[#9ca3af]">(optional)</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={engraving}
-                    onChange={e => setEngraving(e.target.value.slice(0, 30))}
-                    placeholder="Name, date, or short quote…"
-                    className="w-full border border-[#e8e8e5] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#111111] transition-colors pr-10"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#9ca3af]">{engraving.length}/30</span>
-                </div>
-                {/* Live preview */}
-                <AnimatePresence>
-                  {engraving && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="mt-2 bg-[#111111] px-4 py-3 text-center rounded"
-                    >
-                      <span className="text-white/90 text-base" style={FONTS.find(f => f.id === font)?.style}>
-                        {engraving}
-                      </span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Font */}
-              {engraving && (
-                <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
-                  <label className="text-[10px] tracking-[0.25em] uppercase text-[#6b7280] block mb-2">Font Style</label>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {FONTS.map(f => (
-                      <button
-                        key={f.id}
-                        type="button"
-                        onClick={() => setFont(f.id)}
-                        className={`px-3 py-2 border text-left text-xs transition-all ${
-                          font === f.id
-                            ? "border-[#111111] bg-[#111111] text-white"
-                            : "border-[#e8e8e5] bg-white text-[#6b7280] hover:border-[#111111]"
-                        }`}
-                      >
-                        <span style={f.style} className="block text-sm mb-0.5">Aa</span>
-                        <span className="text-[10px]">{f.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Image upload */}
-              <div>
-                <label className="text-[10px] tracking-[0.25em] uppercase text-[#6b7280] block mb-2">Upload Image / Logo <span className="normal-case tracking-normal font-normal text-[#9ca3af]">(optional)</span></label>
-                <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden"
-                  onChange={e => {
-                    const f = e.target.files?.[0] ?? null;
-                    setUploadedFile(f);
-                    setFileName(f?.name ?? "");
-                  }} />
-                <div className="flex items-center gap-2">
-                  <button type="button" onClick={() => fileRef.current?.click()}
-                    className="border border-[#e8e8e5] bg-white px-4 py-2 text-xs text-[#6b7280] hover:border-[#111111] hover:text-[#111111] transition-all">
-                    Choose File
-                  </button>
-                  {fileName
-                    ? <span className="text-xs text-[#111111] truncate max-w-[160px]">{fileName}</span>
-                    : <span className="text-xs text-[#9ca3af]">No file chosen</span>}
-                  {fileName && (
-                    <button onClick={() => { setUploadedFile(null); setFileName(""); }}
-                      className="text-[#ef4444] text-xs hover:underline">Remove</button>
-                  )}
-                </div>
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label className="text-[10px] tracking-[0.25em] uppercase text-[#6b7280] block mb-2">Special Notes <span className="normal-case tracking-normal font-normal text-[#9ca3af]">(optional)</span></label>
-                <textarea
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
-                  rows={2}
-                  placeholder="Any specific requests…"
-                  className="w-full border border-[#e8e8e5] bg-white px-3 py-2 text-sm outline-none focus:border-[#111111] transition-colors resize-none"
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={handleEngravingAdd}
-                  className="flex-1 bg-[#111111] text-white text-[11px] tracking-[0.15em] uppercase font-semibold py-3 hover:bg-[#222] transition-colors"
-                >
-                  Add to Cart
-                </button>
-                <button
-                  onClick={() => setPanelOpen(false)}
-                  className="px-4 border border-[#e8e8e5] text-[#6b7280] text-xs hover:border-[#111111] hover:text-[#111111] transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+            <EngravingPanel
+              product={product}
+              onAddToCart={(customization) => {
+                addCustomizedItem(product, customization);
+                setState("added");
+                setPanelOpen(false);
+                setTimeout(() => setState("idle"), 2200);
+              }}
+              onClose={() => setPanelOpen(false)}
+            />
           </motion.div>
         )}
       </AnimatePresence>
