@@ -18,6 +18,7 @@ const SUPPORT_LINKS = [
   { label: "FAQ", href: "/faq" },
   { label: "Shipping & Returns", href: "/shipping" },
   { label: "Contact Us", href: "/contact" },
+  { label: "Track Order", href: "/track" },
 ];
 
 const SOCIALS = [

@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase";
 import { formatPrice } from "@/lib/products";
 import OrderStatusSelect from "../OrderStatusSelect";
 import CopyPromptButton from "./CopyPromptButton";
+import TrackingForm from "./TrackingForm";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,9 @@ export default async function AdminOrderDetailPage({
           <h1 className="text-xl font-bold text-gray-900">
             Order #{order.id.slice(0, 8).toUpperCase()}
           </h1>
+          {order.tracking_id && (
+            <p className="text-xs text-gray-400 mt-0.5 font-mono">{order.tracking_id}</p>
+          )}
           <p className="text-sm text-gray-500 mt-0.5">
             {new Date(order.created_at).toLocaleDateString("en-GB", {
               weekday: "long", day: "numeric", month: "long", year: "numeric",
@@ -89,21 +93,33 @@ export default async function AdminOrderDetailPage({
             <div className="divide-y divide-gray-50">
               {items.map((item, i) => (
                 <div key={i} className="px-5 py-4">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    {item.image && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-12 h-12 object-cover flex-shrink-0 border border-gray-200 rounded"
+                      />
+                    )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{item.name}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        Qty: {item.quantity} · {formatPrice(item.price)} each
-                      </p>
-                      {item.customization?.summary && (
-                        <span className="inline-flex items-center gap-1 mt-1 text-[10px] bg-violet-50 text-violet-700 border border-violet-200 px-1.5 py-0.5 rounded">
-                          ✏ {item.customization.summary}
-                        </span>
-                      )}
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{item.name}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            Qty: {item.quantity} · {formatPrice(item.price)} each
+                          </p>
+                          {item.customization?.summary && (
+                            <span className="inline-flex items-center gap-1 mt-1 text-[10px] bg-violet-50 text-violet-700 border border-violet-200 px-1.5 py-0.5 rounded">
+                              ✏ {item.customization.summary}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                          {formatPrice(item.price * item.quantity)}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-                      {formatPrice(item.price * item.quantity)}
-                    </p>
                   </div>
 
                   {/* Custom order details */}
@@ -192,7 +208,7 @@ export default async function AdminOrderDetailPage({
           )}
         </div>
 
-        {/* Right column: customer + shipping */}
+        {/* Right column: customer + shipping + tracking */}
         <div className="space-y-4">
           {/* Customer */}
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -222,6 +238,27 @@ export default async function AdminOrderDetailPage({
             </div>
           )}
 
+          {/* Tracking fields */}
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tracking</h2>
+            </div>
+            <div className="px-4 py-4">
+              {order.tracking_id && (
+                <div className="mb-4 pb-3 border-b border-gray-100">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-0.5">Tracking ID</p>
+                  <p className="text-sm font-mono font-semibold text-gray-800">{order.tracking_id}</p>
+                </div>
+              )}
+              <TrackingForm
+                orderId={order.id}
+                initialTrackingNumber={order.tracking_number}
+                initialCarrier={order.carrier}
+                initialEstimatedDelivery={order.estimated_delivery}
+              />
+            </div>
+          </div>
+
           {/* Order meta */}
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
@@ -234,6 +271,12 @@ export default async function AdminOrderDetailPage({
                   {order.status}
                 </span>
               </div>
+              {order.payment_method && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-0.5">Payment</p>
+                  <p className="text-xs text-gray-600 capitalize">{order.payment_method}</p>
+                </div>
+              )}
               {order.stripe_session_id && (
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-0.5">Stripe Session</p>

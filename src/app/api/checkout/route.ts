@@ -6,8 +6,17 @@ import { fromDb, DbProduct } from "@/lib/products";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
+function generateTrackingId(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
+  for (let i = 0; i < 5; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `MYK-2026-${result}`;
+}
+
 export async function POST(req: NextRequest) {
-  const { items, userId, userEmail, shippingAddress } = await req.json();
+  const { items, userId, userEmail, shippingAddress, paymentMethod } = await req.json();
 
   if (!items || items.length === 0) {
     return NextResponse.json({ error: "No items in cart" }, { status: 400 });
@@ -27,7 +36,6 @@ export async function POST(req: NextRequest) {
 
   const lineItems = items.map((item: { id: string; name?: string; price?: number; description?: string; image?: string; quantity: number }) => {
     const product = productMap.get(item.id);
-    // Fall back to cart item data for custom orders not in DB
     const name        = product?.name        ?? item.name        ?? "Custom Order";
     const unitAmount  = product?.price       ?? item.price       ?? 0;
     const description = product?.description ?? item.description ?? undefined;
@@ -56,7 +64,6 @@ export async function POST(req: NextRequest) {
       let customizationPayload: Record<string, unknown> | undefined;
       if (item.customization) {
         customizationPayload = { summary: item.customization.summary };
-        // Parse smart prompt from custom order JSON
         if (item.customization.fabricJson) {
           try {
             const parsed = JSON.parse(item.customization.fabricJson);
@@ -75,6 +82,7 @@ export async function POST(req: NextRequest) {
       };
     });
 
+    const trackingId = generateTrackingId();
     const admin = createAdminClient();
     const { data: order } = await admin.from("orders").insert({
       user_id: userId,
@@ -83,6 +91,8 @@ export async function POST(req: NextRequest) {
       total_amount: totalAmount,
       status: "pending",
       shipping_address: shippingAddress,
+      payment_method: paymentMethod ?? "card",
+      tracking_id: trackingId,
     }).select("id").single();
 
     orderId = order?.id ?? null;
