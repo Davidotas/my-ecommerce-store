@@ -73,9 +73,13 @@ export async function POST(req: NextRequest) {
       };
     });
 
+    console.log("[checkout] userId received:", userId);
+    console.log("[checkout] userEmail:", userEmail);
+    console.log("[checkout] userName:", userName);
+
     const trackingId = generateTrackingId();
     const admin = createAdminClient();
-    const { data: order } = await admin.from("orders").insert({
+    const { data: order, error: insertError } = await admin.from("orders").insert({
       user_id: userId,
       customer_email: userEmail,
       customer_name: userName ?? shippingAddress?.name ?? null,
@@ -87,7 +91,14 @@ export async function POST(req: NextRequest) {
       tracking_id: trackingId,
     }).select("id").single();
 
+    if (insertError) {
+      console.error("[checkout] Order insert failed:", insertError);
+    } else {
+      console.log("[checkout] Order inserted successfully, id:", order?.id);
+    }
+
     orderId = order?.id ?? null;
+    console.log("[checkout] orderId set to:", orderId);
   }
 
   // Create a PaymentIntent — client will confirm it directly with the card details

@@ -26,13 +26,18 @@ export default async function OrdersPage() {
   const user = await getServerUser();
   if (!user) redirect("/account/login?redirect=/account/orders");
 
+  console.log("[orders page] user.id:", user.id);
+
   // Use admin client to bypass RLS — we verify ownership via eq("user_id", user.id)
   const admin = createAdminClient();
-  const { data: orders } = await admin
+  const { data: orders, error: ordersError } = await admin
     .from("orders")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  console.log("[orders page] orders count:", orders?.length ?? 0);
+  if (ordersError) console.error("[orders page] query error:", ordersError);
 
   return (
     <div>
