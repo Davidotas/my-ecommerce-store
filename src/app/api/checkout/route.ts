@@ -46,10 +46,11 @@ export async function POST(req: NextRequest) {
 
   const lineItems = items.map((item: { id: string; name?: string; price?: number; description?: string; image?: string; quantity: number }) => {
     const product = productMap.get(item.id);
-    const name        = product?.name        ?? item.name        ?? "Custom Order";
-    const unitAmount  = product?.price       ?? item.price       ?? 0;
-    const description = product?.description ?? item.description ?? undefined;
-    const images      = product?.image ? [product.image] : [];
+    const name       = product?.name        || item.name        || "Mykolo Mysibi Product";
+    const unitAmount = product?.price       ?? item.price       ?? 0;
+    const rawDesc    = product?.description || item.description || "";
+    const description = rawDesc.trim() || name;
+    const images     = product?.image ? [product.image] : [];
     return {
       price_data: {
         currency: "usd",
