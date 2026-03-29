@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export default function SuccessPage() {
   return (
@@ -18,36 +17,26 @@ function SuccessContent() {
   const { clearCart } = useCart();
   const params = useSearchParams();
   const orderId = params.get("order_id");
-  const paymentIntentId = params.get("payment_intent_id");
   const confirmed = useRef(false);
   const [trackingId, setTrackingId] = useState<string | null>(null);
 
   useEffect(() => {
     clearCart();
 
-    if (orderId && paymentIntentId && !confirmed.current) {
+    if (orderId && !confirmed.current) {
       confirmed.current = true;
 
-      // Mark the order as paid
+      // Confirm the order and get tracking ID in one call
       fetch("/api/order/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId, paymentIntentId }),
-      }).catch(() => {});
-
-      // Fetch the tracking ID
-      supabaseBrowser
-        .from("orders")
-        .select("tracking_id")
-        .eq("id", orderId)
-        .single()
-        .then(({ data }) => {
-          if (data?.tracking_id) {
-            setTrackingId(data.tracking_id);
-          }
-        });
+        body: JSON.stringify({ orderId }),
+      })
+        .then((r) => r.json())
+        .then((data) => { if (data?.trackingId) setTrackingId(data.trackingId); })
+        .catch(() => {});
     }
-  }, [clearCart, orderId, paymentIntentId]);
+  }, [clearCart, orderId]);
 
   return (
     <div className="bg-white min-h-screen pt-[68px] flex flex-col items-center justify-center text-center px-6">

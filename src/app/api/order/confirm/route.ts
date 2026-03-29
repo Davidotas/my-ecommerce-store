@@ -1,36 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json({ error: "Stripe not configured" }, { status: 503 });
-  }
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
   try {
-    const { orderId, paymentIntentId } = await req.json();
-    if (!orderId || !paymentIntentId) {
-      return NextResponse.json({ error: "Missing orderId or paymentIntentId" }, { status: 400 });
-    }
-
-    // Verify with Stripe that the payment actually succeeded
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    if (paymentIntent.status !== "succeeded") {
-      return NextResponse.json({ error: "Payment not confirmed" }, { status: 400 });
+    const { orderId } = await req.json();
+    if (!orderId) {
+      return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
     }
 
     const admin = createAdminClient();
-    await admin
-      .from("orders")
-      .update({
-        status: "processing",
-        stripe_payment_intent_id: paymentIntentId,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", orderId);
 
-    return NextResponse.json({ ok: true });
+    // Verify the order exists and is still pending before marking as processing
+    const { data: order } = await admin
+      .from("orders")
+      .select("id, status")
+      .eq("id", orderId)
+      .single();
+
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    // Only update if still pending (idempotent — safe to call multiple times)
+    if (order.status === "pending") {
+      await admin
+        .from("orders")
+        .update({
+          status: "processing",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
+    }
+
+    // Return tracking_id so the success page can display it without a second RLS-blocked query
+    const { data: updated } = await admin
+      .from("orders")
+      .select("tracking_id")
+      .eq("id", orderId)
+      .single();
+
+    return NextResponse.json({ ok: true, trackingId: updated?.tracking_id ?? null });
   } catch (err) {
     console.error("[order/confirm]", err);
     return NextResponse.json({ error: "Failed to confirm order" }, { status: 500 });

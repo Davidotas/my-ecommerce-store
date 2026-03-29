@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerUser, createSupabaseServerClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase";
 import { formatPrice } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
@@ -19,11 +20,13 @@ export default async function AccountDashboard() {
 
   const supabase = await createSupabaseServerClient();
 
+  const admin = createAdminClient();
   const [{ data: profile }, { data: orders }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
-    supabase
+    // Use admin client to bypass RLS — ownership verified via eq("user_id", user.id)
+    admin
       .from("orders")
-      .select("id,created_at,total_amount,status,items")
+      .select("id,created_at,total_amount,status,items,tracking_id")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(3),
@@ -82,19 +85,24 @@ export default async function AccountDashboard() {
               return (
                 <div key={order.id} className="flex items-center justify-between py-4 gap-4">
                   <div>
-                    <p className="text-xs text-[#9ca3af] font-mono mb-1">#{order.id.slice(0, 8).toUpperCase()}</p>
+                    <p className="text-xs text-[#9ca3af] font-mono mb-1">
+                      {order.tracking_id ?? `#${order.id.slice(0, 8).toUpperCase()}`}
+                    </p>
                     <p className="text-sm text-[#111111]">{itemCount} item{itemCount !== 1 ? "s" : ""}</p>
                     <p className="text-xs text-[#9ca3af] mt-0.5">
                       {new Date(order.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-[#111111] mb-1">
+                  <div className="text-right flex flex-col items-end gap-1">
+                    <p className="text-sm font-medium text-[#111111]">
                       {order.total_amount ? formatPrice(order.total_amount) : "—"}
                     </p>
                     <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusColor}`}>
                       {order.status}
                     </span>
+                    <Link href={`/account/orders/${order.id}`} className="text-[10px] text-[#111111] underline underline-offset-2 hover:no-underline mt-0.5">
+                      View →
+                    </Link>
                   </div>
                 </div>
               );

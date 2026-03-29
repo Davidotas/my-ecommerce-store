@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { getServerUser, createSupabaseServerClient } from "@/lib/supabase-server";
+import { getServerUser } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase";
 import { formatPrice } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
@@ -115,8 +116,9 @@ export default async function OrderDetailPage({
   const user = await getServerUser();
   if (!user) redirect("/account/login?redirect=/account/orders");
 
-  const supabase = await createSupabaseServerClient();
-  const { data: order } = await supabase
+  // Use admin client to bypass RLS — ownership verified via eq("user_id", user.id)
+  const admin = createAdminClient();
+  const { data: order } = await admin
     .from("orders")
     .select("*")
     .eq("id", id)

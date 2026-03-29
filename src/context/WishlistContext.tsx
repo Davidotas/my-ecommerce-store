@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Product } from "@/lib/products";
 
 type WishlistContextType = {
@@ -12,8 +12,35 @@ type WishlistContextType = {
 
 const WishlistContext = createContext<WishlistContextType | null>(null);
 
+const STORAGE_KEY = "mykolo_wishlist";
+
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<Product[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Load from localStorage on mount (client only)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Product[];
+        if (Array.isArray(parsed)) setItems(parsed);
+      }
+    } catch {
+      // ignore parse errors
+    }
+    setHydrated(true);
+  }, []);
+
+  // Persist to localStorage whenever items change (after hydration)
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // ignore storage errors
+    }
+  }, [items, hydrated]);
 
   function toggle(product: Product) {
     setItems((prev) =>
