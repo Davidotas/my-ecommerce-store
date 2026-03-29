@@ -18,21 +18,21 @@ function SuccessContent() {
   const { clearCart } = useCart();
   const params = useSearchParams();
   const orderId = params.get("order_id");
-  const sessionId = params.get("session_id");
+  const paymentIntentId = params.get("payment_intent_id");
   const confirmed = useRef(false);
   const [trackingId, setTrackingId] = useState<string | null>(null);
 
   useEffect(() => {
     clearCart();
 
-    if (orderId && sessionId && !confirmed.current) {
+    if (orderId && paymentIntentId && !confirmed.current) {
       confirmed.current = true;
 
       // Mark the order as paid
       fetch("/api/order/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId, sessionId }),
+        body: JSON.stringify({ orderId, paymentIntentId }),
       }).catch(() => {});
 
       // Fetch the tracking ID
@@ -47,7 +47,7 @@ function SuccessContent() {
           }
         });
     }
-  }, [clearCart, orderId, sessionId]);
+  }, [clearCart, orderId, paymentIntentId]);
 
   return (
     <div className="bg-white min-h-screen pt-[68px] flex flex-col items-center justify-center text-center px-6">

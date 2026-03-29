@@ -19,13 +19,6 @@ export async function POST(req: NextRequest) {
   }
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-  // Resolve base URL from request host so Stripe redirects work on any domain
-  const host    = req.headers.get("host") ?? "localhost:3000";
-  const proto   = host.startsWith("localhost") ? "http" : "https";
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
-    ? process.env.NEXT_PUBLIC_APP_URL
-    : `${proto}://${host}`;
-
   const { items, userId, userEmail, shippingAddress, paymentMethod } = await req.json();
 
   if (!items || items.length === 0) {
@@ -44,30 +37,17 @@ export async function POST(req: NextRequest) {
     (dbProducts ?? []).map((p) => [p.id, fromDb(p as DbProduct)])
   );
 
-  const lineItems = items.map((item: { id: string; name?: string; price?: number; description?: string; image?: string; quantity: number }) => {
-    const product = productMap.get(item.id);
-    const name       = product?.name        || item.name        || "Mykolo Mysibi Product";
-    const unitAmount = product?.price       ?? item.price       ?? 0;
-    const rawDesc    = product?.description || item.description || "";
-    const description = rawDesc.trim() || name;
-    const images     = product?.image ? [product.image] : [];
-    return {
-      price_data: {
-        currency: "usd",
-        product_data: { name, description, images },
-        unit_amount: unitAmount,
-      },
-      quantity: item.quantity,
-    };
-  });
-
   const totalAmount = items.reduce((sum: number, item: { id: string; price?: number; quantity: number }) => {
     const product = productMap.get(item.id);
     const price = product?.price ?? item.price ?? 0;
     return sum + price * item.quantity;
   }, 0);
 
-  // Save a pending order before redirecting to Stripe
+  if (totalAmount <= 0) {
+    return NextResponse.json({ error: "Order total must be greater than zero." }, { status: 400 });
+  }
+
+  // Save a pending order in Supabase before charging
   let orderId: string | null = null;
   if (userId) {
     const orderItems = items.map((item: { id: string; name?: string; price?: number; image?: string; quantity: number; customization?: { summary: string; fabricJson?: string } }) => {
@@ -80,7 +60,7 @@ export async function POST(req: NextRequest) {
             const parsed = JSON.parse(item.customization.fabricJson);
             if (parsed.smartPrompt) customizationPayload.prompt = parsed.smartPrompt;
             customizationPayload.details = parsed;
-          } catch { /* ignore parse errors for Fabric.js JSON */ }
+          } catch { /* ignore parse errors */ }
         }
       }
       return {
@@ -109,26 +89,24 @@ export async function POST(req: NextRequest) {
     orderId = order?.id ?? null;
   }
 
-  let session;
+  // Create a PaymentIntent — client will confirm it directly with the card details
+  let paymentIntent;
   try {
-    session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: lineItems,
-      mode: "payment",
-      success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}${orderId ? `&order_id=${orderId}` : ""}`,
-      cancel_url: `${baseUrl}/cart`,
-      customer_email: userEmail || undefined,
-      metadata: { order_id: orderId ?? "", user_id: userId ?? "" },
+    paymentIntent = await stripe.paymentIntents.create({
+      amount: totalAmount,
+      currency: "usd",
+      receipt_email: userEmail || undefined,
+      metadata: {
+        order_id: orderId ?? "",
+        user_id:  userId  ?? "",
+      },
+      description: `Mykolo Mysibi order${orderId ? ` #${orderId.slice(0, 8).toUpperCase()}` : ""}`,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("Stripe session creation failed:", msg);
-    return NextResponse.json({ error: `Payment session failed: ${msg}` }, { status: 500 });
+    console.error("Stripe PaymentIntent creation failed:", msg);
+    return NextResponse.json({ error: `Payment setup failed: ${msg}` }, { status: 500 });
   }
 
-  if (!session.url) {
-    return NextResponse.json({ error: "No redirect URL returned from payment provider." }, { status: 500 });
-  }
-
-  return NextResponse.json({ url: session.url });
+  return NextResponse.json({ clientSecret: paymentIntent.client_secret, orderId });
 }
