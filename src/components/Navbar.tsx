@@ -256,7 +256,7 @@ export default function Navbar({ categories, settings }: Props) {
               </motion.div>
             </div>
 
-            {/* ── MOBILE: Right side — search + cart ── */}
+            {/* ── MOBILE: Right side — search + account + cart ── */}
             <div className="flex lg:hidden items-center gap-1 ml-auto">
               {/* Search */}
               <motion.button
@@ -269,6 +269,9 @@ export default function Navbar({ categories, settings }: Props) {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </motion.button>
+
+              {/* Account */}
+              <AccountMenu />
 
               {/* Cart */}
               <motion.div
