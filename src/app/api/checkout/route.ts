@@ -73,32 +73,38 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    console.log("[checkout] userId received:", userId);
-    console.log("[checkout] userEmail:", userEmail);
-    console.log("[checkout] userName:", userName);
-
     const trackingId = generateTrackingId();
     const admin = createAdminClient();
-    const { data: order, error: insertError } = await admin.from("orders").insert({
+
+    const insertPayload = {
       user_id: userId,
       customer_email: userEmail,
-      customer_name: userName ?? shippingAddress?.name ?? null,
       items: orderItems,
       total_amount: totalAmount,
       status: "placed",
       shipping_address: shippingAddress,
       payment_method: paymentMethod ?? "card",
       tracking_id: trackingId,
-    }).select("id").single();
+    };
+
+    console.log("[checkout] Inserting order with payload:", JSON.stringify(insertPayload, null, 2));
+
+    const { data: order, error: insertError } = await admin
+      .from("orders")
+      .insert(insertPayload)
+      .select("id")
+      .single();
 
     if (insertError) {
-      console.error("[checkout] Order insert failed:", insertError);
-    } else {
-      console.log("[checkout] Order inserted successfully, id:", order?.id);
+      console.error("[checkout] Order insert FAILED:", JSON.stringify(insertError));
+      return NextResponse.json(
+        { error: `Failed to save order: ${insertError.message} (code: ${insertError.code})` },
+        { status: 500 }
+      );
     }
 
     orderId = order?.id ?? null;
-    console.log("[checkout] orderId set to:", orderId);
+    console.log("[checkout] Order saved OK, id:", orderId, "tracking:", trackingId);
   }
 
   // Create a PaymentIntent — client will confirm it directly with the card details
