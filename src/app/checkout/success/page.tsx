@@ -42,10 +42,18 @@ function SuccessContent() {
 
   // Countdown + auto-redirect
   useEffect(() => {
-    if (countdown <= 0) { router.push("/account/orders"); return; }
-    const t = setTimeout(() => setCountdown((n) => n - 1), 1000);
-    return () => clearTimeout(t);
-  }, [countdown, router]);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          router.push("/account/orders");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [router]);
 
   return (
     <div className="bg-white min-h-screen pt-[68px] flex flex-col items-center justify-center text-center px-6">
