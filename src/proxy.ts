@@ -1,10 +1,26 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const MAINTENANCE = process.env.MAINTENANCE_MODE === "true";
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Admin cookie-based auth guard
+  // ── Maintenance mode ──────────────────────────────────────────────────────
+  if (MAINTENANCE) {
+    const isAllowed =
+      pathname.startsWith("/admin") ||
+      pathname.startsWith("/maintenance") ||
+      pathname.startsWith("/api") ||
+      pathname.startsWith("/_next") ||
+      /\.(png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf|otf)$/.test(pathname);
+
+    if (!isAllowed) {
+      return NextResponse.redirect(new URL("/maintenance", request.url));
+    }
+  }
+
+  // ── Admin cookie-based auth guard ─────────────────────────────────────────
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
     const session = request.cookies.get("admin_session");
     if (session?.value !== "admin_authenticated") {
@@ -12,7 +28,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Refresh Supabase session cookies on every request
+  // ── Refresh Supabase session cookies on every request ────────────────────
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
