@@ -1,128 +1,39 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useEffect, useRef, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useCart } from "@/context/CartContext";
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function SuccessPage() {
-  return (
-    <Suspense>
-      <SuccessContent />
-    </Suspense>
-  );
-}
-
-const REDIRECT_SECONDS = 5;
-
-function SuccessContent() {
-  const { clearCart } = useCart();
-  const router = useRouter();
-  const params = useSearchParams();
-  const orderId = params.get("order_id");
-  const confirmed = useRef(false);
-  const [trackingId, setTrackingId] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState(REDIRECT_SECONDS);
+  const router = useRouter()
+  const [count, setCount] = useState(5)
 
   useEffect(() => {
-    clearCart();
-
-    if (orderId && !confirmed.current) {
-      confirmed.current = true;
-      fetch("/api/order/confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId }),
-      })
-        .then((r) => r.json())
-        .then((data) => { if (data?.trackingId) setTrackingId(data.trackingId); })
-        .catch(() => {});
+    if (count === 0) {
+      router.push('/account/orders')
+      return
     }
-  }, [clearCart, orderId]);
-
-  // Countdown + auto-redirect
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          router.push("/account/orders");
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [router]);
+    const timer = setTimeout(() => setCount(count - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [count, router])
 
   return (
-    <div className="bg-white min-h-screen pt-[68px] flex flex-col items-center justify-center text-center px-6">
-      <div className="w-14 h-14 bg-[#d2ff1f] flex items-center justify-center text-2xl mb-8">
-        <svg className="w-7 h-7" fill="none" stroke="#111111" viewBox="0 0 24 24" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
+    <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
+      <div className="w-16 h-16 bg-[#d2ff1f] flex items-center justify-center mb-8">
+        <span className="text-2xl">✓</span>
       </div>
-
-      <p className="text-[10px] tracking-[0.4em] uppercase text-[#9ca3af] mb-3">Order confirmed</p>
-      <h1 className="text-[clamp(28px,3vw,40px)] text-[#111111] font-light mb-4">Thank you!</h1>
-      <p className="text-sm text-[#6b7280] max-w-xs leading-relaxed mb-6">
-        Your order has been placed. You&apos;ll receive a confirmation email shortly.
-      </p>
-
-      {/* Tracking ID — shown prominently */}
-      {trackingId && (
-        <div className="border border-[#e8e8e5] bg-[#f5f5f3] px-8 py-5 mb-8 text-center">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-[#9ca3af] mb-2">Your Tracking ID</p>
-          <p className="text-xl font-mono font-semibold text-[#111111] tracking-widest">{trackingId}</p>
-          <p className="text-[10px] text-[#9ca3af] mt-2">Save this to track your order</p>
-        </div>
-      )}
-
-      {!trackingId && orderId && (
-        <p className="text-xs text-[#9ca3af] mb-8 font-mono">
-          Order #{orderId.slice(0, 8).toUpperCase()}
-        </p>
-      )}
-
-      {/* Countdown */}
-      <p className="text-xs text-[#9ca3af] mb-6">
-        Redirecting to your orders in{" "}
-        <span className="font-semibold text-[#111111]">{countdown}s</span>
-        {" "}—{" "}
-        <button
-          onClick={() => setCountdown(0)}
-          className="underline underline-offset-2 hover:text-[#111111] transition-colors"
-        >
-          go now
-        </button>
-      </p>
-
-      <div className="flex flex-col sm:flex-row gap-3">
-        {trackingId && (
-          <Link
-            href={`/track?id=${trackingId}`}
-            className="bg-[#111111] text-white text-[10px] tracking-[0.22em] uppercase font-semibold px-8 py-3.5 hover:bg-[#2a2a2a] transition-colors"
-          >
-            Track Order
-          </Link>
-        )}
-        <Link
-          href="/account/orders"
-          className={`text-[10px] tracking-[0.22em] uppercase font-semibold px-8 py-3.5 transition-colors ${
-            trackingId
-              ? "border border-[#e8e8e5] text-[#111111] hover:border-[#111111]"
-              : "bg-[#111111] text-white hover:bg-[#2a2a2a]"
-          }`}
-        >
-          View my orders
+      <p className="text-xs tracking-widest uppercase text-gray-500 mb-2">Order Confirmed</p>
+      <h1 className="text-4xl font-bold mb-4">Thank you!</h1>
+      <p className="text-gray-600 mb-6">Your order has been placed successfully.</p>
+      <p className="text-sm text-gray-500 mb-8">Redirecting in {count}s...</p>
+      <div className="flex gap-4">
+        <Link href="/account/orders" className="bg-black text-white px-8 py-3 text-sm tracking-wider uppercase hover:bg-gray-800">
+          View My Orders
         </Link>
-        <Link
-          href="/shop"
-          className="border border-[#e8e8e5] text-[#111111] text-[10px] tracking-[0.22em] uppercase font-semibold px-8 py-3.5 hover:border-[#111111] transition-colors"
-        >
-          Continue shopping
+        <Link href="/shop" className="border border-black text-black px-8 py-3 text-sm tracking-wider uppercase hover:bg-gray-100">
+          Continue Shopping
         </Link>
       </div>
     </div>
-  );
+  )
 }
