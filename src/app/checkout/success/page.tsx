@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 
 export default function SuccessPage() {
@@ -13,20 +13,22 @@ export default function SuccessPage() {
   );
 }
 
+const REDIRECT_SECONDS = 5;
+
 function SuccessContent() {
   const { clearCart } = useCart();
+  const router = useRouter();
   const params = useSearchParams();
   const orderId = params.get("order_id");
   const confirmed = useRef(false);
   const [trackingId, setTrackingId] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(REDIRECT_SECONDS);
 
   useEffect(() => {
     clearCart();
 
     if (orderId && !confirmed.current) {
       confirmed.current = true;
-
-      // Confirm the order and get tracking ID in one call
       fetch("/api/order/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -37,6 +39,13 @@ function SuccessContent() {
         .catch(() => {});
     }
   }, [clearCart, orderId]);
+
+  // Countdown + auto-redirect
+  useEffect(() => {
+    if (countdown <= 0) { router.push("/account/orders"); return; }
+    const t = setTimeout(() => setCountdown((n) => n - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown, router]);
 
   return (
     <div className="bg-white min-h-screen pt-[68px] flex flex-col items-center justify-center text-center px-6">
@@ -67,6 +76,19 @@ function SuccessContent() {
         </p>
       )}
 
+      {/* Countdown */}
+      <p className="text-xs text-[#9ca3af] mb-6">
+        Redirecting to your orders in{" "}
+        <span className="font-semibold text-[#111111]">{countdown}s</span>
+        {" "}—{" "}
+        <button
+          onClick={() => setCountdown(0)}
+          className="underline underline-offset-2 hover:text-[#111111] transition-colors"
+        >
+          go now
+        </button>
+      </p>
+
       <div className="flex flex-col sm:flex-row gap-3">
         {trackingId && (
           <Link
@@ -87,7 +109,7 @@ function SuccessContent() {
           View my orders
         </Link>
         <Link
-          href="/"
+          href="/shop"
           className="border border-[#e8e8e5] text-[#111111] text-[10px] tracking-[0.22em] uppercase font-semibold px-8 py-3.5 hover:border-[#111111] transition-colors"
         >
           Continue shopping
