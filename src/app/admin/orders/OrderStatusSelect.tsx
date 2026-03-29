@@ -3,9 +3,10 @@
 import { useState, useTransition } from "react";
 import { updateOrderStatus } from "./actions";
 
-const STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"];
+const STATUSES = ["placed", "pending", "processing", "shipped", "delivered", "cancelled"];
 
 const STATUS_COLORS: Record<string, string> = {
+  placed:     "bg-lime-100 text-lime-700",
   pending:    "bg-yellow-100 text-yellow-700",
   processing: "bg-blue-100 text-blue-700",
   shipped:    "bg-purple-100 text-purple-700",

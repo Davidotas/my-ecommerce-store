@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Only update if still pending (idempotent — safe to call multiple times)
-    if (order.status === "pending") {
+    // Only update if still placed/pending (idempotent — safe to call multiple times)
+    if (order.status === "placed" || order.status === "pending") {
       await admin
         .from("orders")
         .update({

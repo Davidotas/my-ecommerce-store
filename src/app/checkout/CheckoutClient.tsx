@@ -365,7 +365,7 @@ export default function CheckoutClient({ userId, userEmail, profile }: Props) {
             id: i.id, name: i.name, price: i.price,
             image: i.image, quantity: i.quantity, customization: i.customization,
           })),
-          userId, userEmail,
+          userId, userEmail, userName: delivery.fullName || profile?.full_name || "",
           shippingAddress: {
             name: delivery.fullName, line1: delivery.line1, line2: delivery.line2,
             city: delivery.city, postal_code: delivery.postcode,

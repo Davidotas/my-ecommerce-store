@@ -6,6 +6,7 @@ import OrderStatusSelect from "./OrderStatusSelect";
 export const dynamic = "force-dynamic";
 
 const STATUS_COLORS: Record<string, string> = {
+  placed:     "bg-lime-100 text-lime-700",
   pending:    "bg-yellow-100 text-yellow-700",
   processing: "bg-blue-100 text-blue-700",
   shipped:    "bg-purple-100 text-purple-700",
@@ -37,7 +38,7 @@ export default async function AdminOrdersPage({
   const counts: Record<string, number> = { all: allOrders?.length ?? 0 };
   allOrders?.forEach((o) => { counts[o.status] = (counts[o.status] ?? 0) + 1; });
 
-  const STATUSES = ["all", "pending", "processing", "shipped", "delivered", "cancelled"];
+  const STATUSES = ["all", "placed", "pending", "processing", "shipped", "delivered", "cancelled"];
 
   return (
     <div className="p-8">

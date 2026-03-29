@@ -132,11 +132,12 @@ export default async function OrderDetailPage({
   const orderRef = order.tracking_id ?? `#${order.id.slice(0, 8).toUpperCase()}`;
 
   const STATUS_COLORS: Record<string, string> = {
-    pending: "bg-yellow-100 text-yellow-700",
+    placed:     "bg-lime-100 text-lime-700",
+    pending:    "bg-yellow-100 text-yellow-700",
     processing: "bg-blue-100 text-blue-700",
-    shipped: "bg-purple-100 text-purple-700",
-    delivered: "bg-green-100 text-green-700",
-    cancelled: "bg-red-100 text-red-600",
+    shipped:    "bg-purple-100 text-purple-700",
+    delivered:  "bg-green-100 text-green-700",
+    cancelled:  "bg-red-100 text-red-600",
   };
 
   const statusColor = STATUS_COLORS[order.status] ?? "bg-gray-100 text-gray-600";

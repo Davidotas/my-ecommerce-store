@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   }
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-  const { items, userId, userEmail, shippingAddress, paymentMethod } = await req.json();
+  const { items, userId, userEmail, userName, shippingAddress, paymentMethod } = await req.json();
 
   if (!items || items.length === 0) {
     return NextResponse.json({ error: "No items in cart" }, { status: 400 });
@@ -78,9 +78,10 @@ export async function POST(req: NextRequest) {
     const { data: order } = await admin.from("orders").insert({
       user_id: userId,
       customer_email: userEmail,
+      customer_name: userName ?? shippingAddress?.name ?? null,
       items: orderItems,
       total_amount: totalAmount,
-      status: "pending",
+      status: "placed",
       shipping_address: shippingAddress,
       payment_method: paymentMethod ?? "card",
       tracking_id: trackingId,
