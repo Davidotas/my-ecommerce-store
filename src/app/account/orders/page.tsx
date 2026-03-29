@@ -26,18 +26,31 @@ export default async function OrdersPage() {
   const user = await getServerUser();
   if (!user) redirect("/account/login?redirect=/account/orders");
 
-  console.log("[orders page] user.id:", user.id);
+  console.log("[orders page] user.id:", user.id, "email:", user.email);
 
-  // Use admin client to bypass RLS — we verify ownership via eq("user_id", user.id)
   const admin = createAdminClient();
-  const { data: orders, error: ordersError } = await admin
-    .from("orders")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
 
-  console.log("[orders page] orders count:", orders?.length ?? 0);
-  if (ordersError) console.error("[orders page] query error:", ordersError);
+  // Query by user_id first, then merge any orders matched by email (catches orders
+  // saved before user_id was properly set)
+  const [{ data: byUserId, error: err1 }, { data: byEmail, error: err2 }] = await Promise.all([
+    admin.from("orders").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+    user.email
+      ? admin.from("orders").select("*").eq("customer_email", user.email).order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (err1) console.error("[orders page] user_id query error:", err1);
+  if (err2) console.error("[orders page] email query error:", err2);
+
+  // Merge and deduplicate by order id
+  const seen = new Set<string>();
+  const orders = [...(byUserId ?? []), ...(byEmail ?? [])].filter((o) => {
+    if (seen.has(o.id)) return false;
+    seen.add(o.id);
+    return true;
+  }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  console.log("[orders page] orders found:", orders.length, "(by userId:", byUserId?.length ?? 0, "by email:", byEmail?.length ?? 0, ")");
 
   return (
     <div>

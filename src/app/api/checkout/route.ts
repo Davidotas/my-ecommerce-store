@@ -47,65 +47,68 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Order total must be greater than zero." }, { status: 400 });
   }
 
-  // Save a pending order in Supabase before charging
-  let orderId: string | null = null;
-  if (userId) {
-    const orderItems = items.map((item: { id: string; name?: string; price?: number; image?: string; quantity: number; customization?: { summary: string; fabricJson?: string } }) => {
-      const product = productMap.get(item.id);
-      let customizationPayload: Record<string, unknown> | undefined;
-      if (item.customization) {
-        customizationPayload = { summary: item.customization.summary };
-        if (item.customization.fabricJson) {
-          try {
-            const parsed = JSON.parse(item.customization.fabricJson);
-            if (parsed.smartPrompt) customizationPayload.prompt = parsed.smartPrompt;
-            customizationPayload.details = parsed;
-          } catch { /* ignore parse errors */ }
-        }
+  // Build order items
+  const orderItems = items.map((item: { id: string; name?: string; price?: number; image?: string; quantity: number; customization?: { summary: string; fabricJson?: string } }) => {
+    const product = productMap.get(item.id);
+    let customizationPayload: Record<string, unknown> | undefined;
+    if (item.customization) {
+      customizationPayload = { summary: item.customization.summary };
+      if (item.customization.fabricJson) {
+        try {
+          const parsed = JSON.parse(item.customization.fabricJson);
+          if (parsed.smartPrompt) customizationPayload.prompt = parsed.smartPrompt;
+          customizationPayload.details = parsed;
+        } catch { /* ignore parse errors */ }
       }
-      return {
-        id: item.id,
-        name:     product?.name  ?? item.name  ?? "Custom Order",
-        price:    product?.price ?? item.price ?? 0,
-        quantity: item.quantity,
-        image:    product?.image ?? item.image ?? "",
-        ...(customizationPayload ? { customization: customizationPayload } : {}),
-      };
-    });
-
-    const trackingId = generateTrackingId();
-    const admin = createAdminClient();
-
-    const insertPayload = {
-      user_id: userId,
-      customer_email: userEmail,
-      items: orderItems,
-      total_amount: totalAmount,
-      status: "placed",
-      shipping_address: shippingAddress,
-      payment_method: paymentMethod ?? "card",
-      tracking_id: trackingId,
-    };
-
-    console.log("[checkout] Inserting order with payload:", JSON.stringify(insertPayload, null, 2));
-
-    const { data: order, error: insertError } = await admin
-      .from("orders")
-      .insert(insertPayload)
-      .select("id")
-      .single();
-
-    if (insertError) {
-      console.error("[checkout] Order insert FAILED:", JSON.stringify(insertError));
-      return NextResponse.json(
-        { error: `Failed to save order: ${insertError.message} (code: ${insertError.code})` },
-        { status: 500 }
-      );
     }
+    return {
+      id: item.id,
+      name:     product?.name  ?? item.name  ?? "Custom Order",
+      price:    product?.price ?? item.price ?? 0,
+      quantity: item.quantity,
+      image:    product?.image ?? item.image ?? "",
+      ...(customizationPayload ? { customization: customizationPayload } : {}),
+    };
+  });
 
-    orderId = order?.id ?? null;
-    console.log("[checkout] Order saved OK, id:", orderId, "tracking:", trackingId);
+  // Save order — always, for both logged-in and guest users
+  let orderId: string | null = null;
+  const trackingId = generateTrackingId();
+  const admin = createAdminClient();
+
+  // Only include user_id if it's a valid non-empty string
+  const validUserId = userId && typeof userId === "string" && userId.trim().length > 0 ? userId : null;
+
+  const insertPayload: Record<string, unknown> = {
+    customer_email: userEmail,
+    items: orderItems,
+    total_amount: totalAmount,
+    status: "placed",
+    shipping_address: shippingAddress,
+    payment_method: paymentMethod ?? "card",
+    tracking_id: trackingId,
+  };
+  if (validUserId) insertPayload.user_id = validUserId;
+
+  console.log("[checkout] userId:", userId, "validUserId:", validUserId);
+  console.log("[checkout] Inserting order:", JSON.stringify({ ...insertPayload, items: `[${orderItems.length} items]` }));
+
+  const { data: order, error: insertError } = await admin
+    .from("orders")
+    .insert(insertPayload)
+    .select("id")
+    .single();
+
+  if (insertError) {
+    console.error("[checkout] Order insert FAILED:", JSON.stringify(insertError));
+    return NextResponse.json(
+      { error: `Failed to save order: ${insertError.message} (code: ${insertError.code})` },
+      { status: 500 }
+    );
   }
+
+  orderId = order?.id ?? null;
+  console.log("[checkout] Order saved OK, id:", orderId, "tracking:", trackingId);
 
   // Create a PaymentIntent — client will confirm it directly with the card details
   let paymentIntent;

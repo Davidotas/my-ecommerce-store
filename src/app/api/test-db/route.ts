@@ -20,7 +20,6 @@ export async function GET() {
 
   // 2. Try a test insert then immediately delete it
   const testPayload = {
-    user_id: "00000000-0000-0000-0000-000000000001",
     customer_email: "test@test.com",
     items: [{ id: "test", name: "Test Item", price: 100, quantity: 1 }],
     total_amount: 100,
